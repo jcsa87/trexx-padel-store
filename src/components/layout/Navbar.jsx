@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ShoppingBag, Menu, X, User, Search, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -9,23 +9,25 @@ import {
 } from "framer-motion";
 
 // IMPORTAMOS LOS MODALES
+// Asegúrate de que estos archivos existan en tu carpeta /auth
 import LoginModal from "../auth/LoginModal";
 import RegisterModal from "../auth/RegisterModal";
 import ForgotPasswordModal from "../auth/ForgotPasswordModal";
 
 // ESTRUCTURA DEL MENÚ
+// Si decidiste usar la "Single Page Shop" (recomendado), los paths llevan el hash (#)
 const MENU_ITEMS = [
-  { label: "PALAS", path: "/palas" },
+  { label: "PALAS", path: "/shop#palas" },
   {
     label: "ROPA",
-    path: "/ropa",
+    path: "/shop#ropa",
     submenu: [
-      { label: "HOMBRE", path: "/ropa/hombre" },
-      { label: "MUJER", path: "/ropa/mujer" },
+      { label: "HOMBRE", path: "/shop#ropa-hombre" },
+      { label: "MUJER", path: "/shop#ropa-mujer" },
     ],
   },
-  { label: "ZAPATILLAS", path: "/zapatillas" },
-  { label: "ACCESORIOS", path: "/accesorios" },
+  { label: "ZAPATILLAS", path: "/shop#zapatillas" },
+  { label: "ACCESORIOS", path: "/shop#accesorios" },
 ];
 
 const Navbar = () => {
@@ -41,6 +43,12 @@ const Navbar = () => {
 
   const searchInputRef = useRef(null);
   const { scrollY } = useScroll();
+  const location = useLocation();
+
+  // Cerrar menú móvil al cambiar de ruta
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location]);
 
   // Auto-focus al abrir el buscador
   useEffect(() => {
@@ -71,18 +79,20 @@ const Navbar = () => {
         animate={isHidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
         className={`fixed w-full z-50 top-0 start-0 transition-colors duration-500 ${
-          isScrolled ? "bg-trexx-bg/95 backdrop-blur-md" : "bg-transparent"
+          isScrolled
+            ? "bg-[#050505]/90 backdrop-blur-md border-b border-white/10 py-3"
+            : "bg-transparent py-6"
         }`}
         onMouseLeave={() => setHoveredMenu(null)}
       >
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between px-6 py-4 relative">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between px-6 relative">
           {/* 1. LOGO */}
           <Link to="/" className="group flex items-center gap-1 z-50 mr-8">
             <motion.div
               whileHover={{ rotate: -5 }}
-              className="w-8 h-8 bg-trexx-red skew-x-[-10deg] flex items-center justify-center mr-2"
+              className="w-10 h-10 bg-trexx-red skew-x-[-10deg] flex items-center justify-center mr-2 shadow-[0_0_15px_rgba(220,38,38,0.5)]"
             >
-              <span className="text-white font-black text-xs skew-x-[10deg]">
+              <span className="text-white font-black text-xl skew-x-[10deg] italic">
                 T
               </span>
             </motion.div>
@@ -92,7 +102,7 @@ const Navbar = () => {
           </Link>
 
           {/* 2. ZONA CENTRAL: MENÚ vs BÚSQUEDA */}
-          <div className="flex-1 flex justify-center md:justify-start">
+          <div className="flex-1 flex justify-center md:justify-start pl-0 md:pl-8">
             <AnimatePresence mode="wait">
               {/* CASO A: BARRA DE BÚSQUEDA ACTIVADA */}
               {isSearchOpen ? (
@@ -113,7 +123,7 @@ const Navbar = () => {
                       ref={searchInputRef}
                       type="text"
                       placeholder="Buscar palas, zapatillas..."
-                      className="w-full bg-transparent border-b border-white/20 py-2 pl-8 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-trexx-red transition-all font-medium tracking-wide"
+                      className="w-full bg-transparent border-b border-white/20 py-2 pl-8 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-trexx-red transition-all font-medium tracking-wide uppercase text-sm"
                     />
                   </div>
                   <button
@@ -131,40 +141,32 @@ const Navbar = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.3 }}
-                  className="hidden md:flex items-center gap-8 font-medium text-xs tracking-[0.2em]"
+                  className="hidden md:flex items-center gap-8 font-bold text-xs tracking-[0.15em]"
                 >
-                  {MENU_ITEMS.map((item, index) => (
+                  {MENU_ITEMS.map((item) => (
                     <div
                       key={item.label}
-                      className="relative group h-full"
+                      className="relative group h-full py-2"
                       onMouseEnter={() => setHoveredMenu(item.label)}
                     >
                       <Link
                         to={item.path}
-                        className="relative block py-2 flex items-center gap-1"
+                        className="relative flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
                       >
-                        {/* Animación de brillo "Breathing" */}
-                        <motion.span
-                          className="block text-white group-hover:text-trexx-red transition-colors duration-300"
-                          animate={{ opacity: [0.7, 1, 0.7] }}
-                          transition={{
-                            duration: 3 + index,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                        >
-                          {item.label}
-                        </motion.span>
+                        {item.label}
                         {item.submenu && (
                           <ChevronDown
-                            size={10}
-                            className={`text-trexx-red transition-transform duration-300 ${hoveredMenu === item.label ? "rotate-180" : ""}`}
+                            size={12}
+                            className={`transition-transform duration-300 ${
+                              hoveredMenu === item.label
+                                ? "rotate-180 text-trexx-red"
+                                : ""
+                            }`}
                           />
                         )}
+                        {/* Línea roja animada */}
+                        <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-trexx-red group-hover:w-full transition-all duration-300 ease-out"></span>
                       </Link>
-
-                      {/* Línea roja inferior (Hover) */}
-                      <span className="absolute bottom-0 left-0 w-full h-[1px] bg-trexx-red transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left"></span>
 
                       {/* Dropdown Menu */}
                       <AnimatePresence>
@@ -186,20 +188,20 @@ const Navbar = () => {
                               clipPath: "inset(0% 0% 100% 0%)",
                             }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full left-0 mt-2 w-48 bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden"
+                            className="absolute top-full left-0 mt-4 w-48 bg-[#0a0a0a] border border-white/10 shadow-2xl overflow-hidden"
                           >
+                            <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-trexx-red"></div>
                             <div className="flex flex-col py-2">
                               {item.submenu.map((subItem) => (
                                 <Link
                                   key={subItem.label}
                                   to={subItem.path}
-                                  className="px-6 py-3 text-white hover:text-trexx-red hover:bg-white/5 transition-all text-[10px] tracking-[0.2em] font-bold"
+                                  className="px-6 py-3 text-gray-400 hover:text-white hover:bg-white/5 transition-all text-[10px] tracking-[0.2em] font-bold block"
                                 >
                                   {subItem.label}
                                 </Link>
                               ))}
                             </div>
-                            <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-trexx-red"></div>
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -211,15 +213,15 @@ const Navbar = () => {
           </div>
 
           {/* 3. ICONOS DE ACCIÓN */}
-          <div className="flex items-center gap-6 text-white z-50 pl-4">
-            {/* Lupa (Oculta si ya estamos buscando) */}
+          <div className="flex items-center gap-5 text-white z-50 pl-4">
+            {/* Lupa Trigger */}
             {!isSearchOpen && (
               <motion.button
                 onClick={() => setIsSearchOpen(true)}
                 whileHover={{ scale: 1.1 }}
-                className="hover:text-trexx-red transition-colors"
+                className="hover:text-trexx-red transition-colors hidden sm:block"
               >
-                <Search size={20} strokeWidth={1.5} />
+                <Search size={20} strokeWidth={2} />
               </motion.button>
             )}
 
@@ -229,26 +231,28 @@ const Navbar = () => {
               whileHover={{ scale: 1.1 }}
               className="hover:text-trexx-red transition-colors hidden sm:block"
             >
-              <User size={20} strokeWidth={1.5} />
+              <User size={20} strokeWidth={2} />
             </motion.button>
 
             {/* Carrito */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              className="relative hover:text-trexx-red transition-colors"
-            >
-              <ShoppingBag size={20} strokeWidth={1.5} />
-              <span className="absolute -top-1.5 -right-1.5 bg-trexx-red text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                2
-              </span>
-            </motion.button>
+            <Link to="/carrito">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                className="relative hover:text-trexx-red transition-colors group"
+              >
+                <ShoppingBag size={20} strokeWidth={2} />
+                <span className="absolute -top-2 -right-2 bg-trexx-red text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-lg group-hover:scale-110 transition-transform">
+                  2
+                </span>
+              </motion.button>
+            </Link>
 
             {/* Mobile Toggle */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden text-white hover:text-trexx-red transition-colors focus:outline-none"
+              className="md:hidden text-white hover:text-trexx-red transition-colors focus:outline-none ml-2"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
+              {isOpen ? <X size={26} /> : <Menu size={26} />}
             </button>
           </div>
 
@@ -259,28 +263,28 @@ const Navbar = () => {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="absolute top-full left-0 w-full bg-trexx-bg/95 backdrop-blur-xl border-b border-white/10 p-6 md:hidden flex flex-col gap-6 shadow-2xl"
+                className="fixed inset-0 top-[70px] z-40 bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 p-8 md:hidden flex flex-col gap-8 shadow-2xl h-[calc(100vh-70px)] overflow-y-auto"
               >
                 {MENU_ITEMS.map((item) => (
                   <div
                     key={item.label}
-                    className="w-full flex flex-col items-center"
+                    className="w-full flex flex-col items-start border-b border-white/5 pb-4 last:border-0"
                   >
                     <Link
                       to={item.path}
                       onClick={() => !item.submenu && setIsOpen(false)}
-                      className="text-2xl font-black italic tracking-tighter text-white hover:text-trexx-red transition-colors"
+                      className="text-3xl font-black italic tracking-tighter text-white hover:text-trexx-red transition-colors uppercase"
                     >
                       {item.label}
                     </Link>
                     {item.submenu && (
-                      <div className="flex flex-col items-center gap-3 mt-3 mb-2">
+                      <div className="flex flex-col items-start gap-3 mt-3 pl-4 border-l border-white/20">
                         {item.submenu.map((sub) => (
                           <Link
                             key={sub.label}
                             to={sub.path}
                             onClick={() => setIsOpen(false)}
-                            className="text-sm text-gray-400 hover:text-white tracking-widest uppercase"
+                            className="text-sm text-gray-400 hover:text-white tracking-widest uppercase font-bold"
                           >
                             {sub.label}
                           </Link>
@@ -289,16 +293,17 @@ const Navbar = () => {
                     )}
                   </div>
                 ))}
+
                 {/* Botón Login en Móvil */}
-                <div className="flex gap-4 mt-4 pt-4 border-t border-white/10 w-full justify-center">
+                <div className="mt-auto pb-8 w-full">
                   <button
                     onClick={() => {
                       setIsOpen(false);
                       setAuthModal("login");
                     }}
-                    className="flex items-center gap-2 text-white hover:text-trexx-red text-xs tracking-widest uppercase"
+                    className="w-full py-4 border border-white/20 text-white font-bold tracking-widest uppercase hover:bg-white hover:text-black transition-colors flex items-center justify-center gap-3"
                   >
-                    <User size={16} /> Login
+                    <User size={18} /> Iniciar Sesión
                   </button>
                 </div>
               </motion.div>

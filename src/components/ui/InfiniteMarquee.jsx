@@ -25,7 +25,7 @@ const InfiniteMarquee = () => {
           backgroundPosition: ["0% 50%", "100% 50%"], // Mueve el gradiente horizontalmente
         }}
         transition={{
-          duration: 1, // <--- CAMBIO AQUÍ: Reducido de 15s a 6s para mucha más velocidad
+          duration: 5, // <--- CAMBIO AQUÍ: Reducido de 15s a 6s para mucha más velocidad
           ease: "linear",
           repeat: Infinity,
         }}

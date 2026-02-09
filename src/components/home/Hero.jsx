@@ -102,7 +102,8 @@ const Hero = ({ current, setCurrent }) => {
             <div className="relative z-50 order-1 flex flex-col justify-center">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                whileInView={{ opacity: 1, x: 0 }} // Usamos whileInView
+                viewport={{ once: false }} // Animación se repite
                 transition={{ delay: 0.2 }}
                 className="inline-flex w-fit items-center gap-2 border border-white/20 bg-white/5 px-3 py-1 mb-4 lg:mb-6 rounded-full backdrop-blur-sm"
               >
@@ -118,7 +119,8 @@ const Hero = ({ current, setCurrent }) => {
               <div className="mb-4 lg:mb-6 relative">
                 <motion.h2
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  whileInView={{ opacity: 1, y: 0 }} // Usamos whileInView
+                  viewport={{ once: false }} // Animación se repite
                   transition={{ delay: 0.3 }}
                   className="text-white text-lg md:text-2xl font-bold tracking-[0.5em] italic opacity-50 mb-[-5px] pl-1"
                 >
@@ -128,7 +130,8 @@ const Hero = ({ current, setCurrent }) => {
                 {/* CAMBIO: Tamaños de fuente responsivos (text-5xl en movil -> text-100px en desktop) */}
                 <motion.h1
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  whileInView={{ opacity: 1, y: 0 }} // Usamos whileInView
+                  viewport={{ once: false }} // Animación se repite
                   transition={{ delay: 0.4 }}
                   className="text-5xl sm:text-7xl lg:text-[100px] font-black italic tracking-tighter text-white leading-[0.9] whitespace-nowrap relative z-50"
                 >
@@ -146,7 +149,8 @@ const Hero = ({ current, setCurrent }) => {
 
               <motion.p
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                whileInView={{ opacity: 1 }} // Usamos whileInView
+                viewport={{ once: false }} // Animación se repite
                 transition={{ delay: 0.5 }}
                 className="text-trexx-red font-bold text-sm md:text-lg tracking-widest uppercase mb-4"
                 style={{ color: SLIDES[current].color }}
@@ -157,7 +161,8 @@ const Hero = ({ current, setCurrent }) => {
               {/* CAMBIO: Ocultamos descripción larga en pantallas muy pequeñas o reducimos fuente */}
               <motion.p
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                whileInView={{ opacity: 1 }} // Usamos whileInView
+                viewport={{ once: false }} // Animación se repite
                 transition={{ delay: 0.6 }}
                 className="text-white/60 text-sm md:text-lg max-w-md leading-relaxed mb-6 lg:mb-8 border-l-2 pl-4 line-clamp-3 md:line-clamp-none"
                 style={{ borderColor: `${SLIDES[current].color}40` }}
@@ -167,7 +172,8 @@ const Hero = ({ current, setCurrent }) => {
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                whileInView={{ opacity: 1, y: 0 }} // Usamos whileInView
+                viewport={{ once: false }} // Animación se repite
                 transition={{ delay: 0.7 }}
                 className="flex flex-wrap gap-2 md:gap-3 mb-8 lg:mb-10"
               >
@@ -188,7 +194,8 @@ const Hero = ({ current, setCurrent }) => {
 
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                whileInView={{ opacity: 1, y: 0 }} // Usamos whileInView
+                viewport={{ once: false }} // Animación se repite
                 transition={{ delay: 0.8 }}
                 whileHover={{ scale: 1.05, x: 10 }}
                 className="w-full md:w-fit group relative px-8 py-4 bg-transparent border overflow-hidden"
@@ -207,7 +214,8 @@ const Hero = ({ current, setCurrent }) => {
               {/* Texto gigante de fondo (oculto en móvil para limpiar la vista) */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                whileInView={{ opacity: 1, scale: 1 }} // Usamos whileInView
+                viewport={{ once: false }} // Animación se repite
                 transition={{ duration: 1 }}
                 className="absolute select-none pointer-events-none z-[-1] hidden lg:block"
               >
@@ -222,13 +230,15 @@ const Hero = ({ current, setCurrent }) => {
               <motion.img
                 key={SLIDES[current].image}
                 initial={{ opacity: 0, y: 30, rotate: 5, scale: 0.9 }}
-                animate={{
+                whileInView={{
+                  // Usamos whileInView
                   opacity: 1,
                   y: 0,
                   rotate: 0,
                   scale: 1,
                   filter: `drop-shadow(0 0 40px ${SLIDES[current].color}50)`,
                 }}
+                viewport={{ once: false }} // Animación se repite
                 transition={{
                   duration: 0.8,
                   type: "spring",
