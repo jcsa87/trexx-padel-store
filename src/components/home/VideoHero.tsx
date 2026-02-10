@@ -30,7 +30,7 @@ const HERO_SLIDES = [
       </>
     ),
     description:
-      "La evolución del pádel ha llegado. Potencia descomunal y control quirúrgico en cada golpe.",
+      "La evolución del pádel llegó. Potencia y control en cada golpe.",
     videoSrc: "/videos/trexx-gameplay.mp4",
     themeColor: "#dc2626",
     overlayInfo: {
@@ -402,7 +402,6 @@ const VideoHero = () => {
         transition={{ delay: 1, duration: 2, repeat: Infinity }}
         className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/30 flex flex-col items-center gap-2 z-40"
       >
-        <span className="text-[9px] tracking-[0.2em] uppercase">Scroll</span>
         <div className="w-[1px] h-10 bg-gradient-to-b from-white/30 to-transparent"></div>
       </motion.div>
     </section>

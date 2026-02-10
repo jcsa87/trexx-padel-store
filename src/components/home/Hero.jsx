@@ -59,8 +59,11 @@ const Hero = ({ current, setCurrent }) => {
   };
 
   // --- LÓGICA DE AUTO-AVANCE ---
+  // Lógica de auto-avance para imágenes
   useEffect(() => {
-    setVideoProgress(0);
+    // ELIMINADO: setVideoProgress(0) aquí causaba el error de linter.
+    // El progreso se reseteará naturalmente al desmontarse el componente de video gracias al 'key'.
+
     let timer;
     const currentSlide = SLIDES[current];
 
@@ -103,7 +106,7 @@ const Hero = ({ current, setCurrent }) => {
             className="absolute inset-0 w-full h-full"
           >
             <div
-              className="absolute top-1/2 -translate-y-1/2 -right-[40%] w-[800px] h-[800px] rounded-full blur-[150px] opacity-40"
+              className="absolute top-1/2 -translate-y-1/2 -right-[40%] w-[800px] h-[800px] rounded-full blur-[150px] opacity-20"
               style={{ backgroundColor: SLIDES[current].color }}
             />
           </motion.div>
