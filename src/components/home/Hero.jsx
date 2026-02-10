@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -7,8 +7,10 @@ import {
   Zap,
   Shield,
   Wind,
+  Crown,
 } from "lucide-react";
 
+// --- DATOS ---
 const SLIDES = [
   {
     id: 1,
@@ -18,35 +20,36 @@ const SLIDES = [
     description:
       "Desata el caos en la pista. Balance alto y carbono 18K para rematadores que no negocian la fuerza.",
     specs: [
-      { icon: <Zap size={16} />, label: "Potencia" }, // Acorté label para móvil
+      { icon: <Zap size={16} />, label: "Potencia" },
       { icon: <Shield size={16} />, label: "18K" },
       { icon: <Wind size={16} />, label: "Alto" },
     ],
-    image:
-      "https://images.unsplash.com/photo-1626246366036-248d2b99371d?q=80&w=800&auto=format&fit=crop",
+    type: "video",
+    src: "/videos/dragon-presentation.mp4",
     color: "#dc2626",
-    bgGradient: "from-red-900/40 via-black to-black",
   },
   {
     id: 2,
     brand: "TREXX",
-    model: "CONTROL",
-    tagline: "PRECISIÓN TOTAL",
+    model: "GOLD PRO MAX",
+    tagline: "EL TOQUE MIDAS",
     description:
-      "Domina cada ángulo. Punto dulce ampliado y goma soft para una defensa impenetrable.",
+      "Lujo y rendimiento absoluto. Edición limitada con carbono 24K y núcleo híbrido para un tacto inigualables.",
     specs: [
-      { icon: <Zap size={16} />, label: "Control" },
-      { icon: <Shield size={16} />, label: "12K" },
-      { icon: <Wind size={16} />, label: "Medio" },
+      { icon: <Crown size={16} />, label: "Híbrido" },
+      { icon: <Shield size={16} />, label: "24K Gold" },
+      { icon: <Wind size={16} />, label: "Medio-Alto" },
     ],
-    image:
-      "https://images.unsplash.com/photo-1629250005510-911cb34d1685?q=80&w=800&auto=format&fit=crop",
-    color: "#06b6d4",
-    bgGradient: "from-cyan-900/40 via-black to-black",
+    type: "video",
+    src: "/videos/gold-presentation.mp4",
+    color: "#D4AF37",
   },
 ];
 
 const Hero = ({ current, setCurrent }) => {
+  const [videoProgress, setVideoProgress] = useState(0);
+  const videoRef = useRef(null);
+
   const nextSlide = useCallback(() => {
     setCurrent((prev) => (prev + 1) % SLIDES.length);
   }, [setCurrent]);
@@ -55,242 +58,246 @@ const Hero = ({ current, setCurrent }) => {
     setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
   };
 
+  // --- LÓGICA DE AUTO-AVANCE ---
   useEffect(() => {
-    const timer = setInterval(() => {
-      nextSlide();
-    }, 6000);
-    return () => clearInterval(timer);
-  }, [nextSlide]);
+    setVideoProgress(0);
+    let timer;
+    const currentSlide = SLIDES[current];
+
+    if (currentSlide.type === "image") {
+      timer = setTimeout(() => {
+        nextSlide();
+      }, 6000);
+    }
+    return () => clearTimeout(timer);
+  }, [current, nextSlide]);
+
+  const handleVideoUpdate = () => {
+    if (videoRef.current) {
+      const progress =
+        (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      setVideoProgress(progress || 0);
+    }
+  };
 
   return (
-    // CAMBIO: min-h-[100dvh] ayuda en móbiles con la barra de navegación del navegador
-    <section className="relative min-h-[100dvh] w-full overflow-hidden bg-[#050505] flex items-center">
-      {/* FONDO RUIDO */}
+    // CAMBIO IMPORTANTE:
+    // py-32 (móvil) y lg:py-48 (escritorio).
+    // Esto empuja el contenido hacia adentro, alejándolo de la franja negra superior y del borde inferior.
+    <section className="relative min-h-[90vh] w-full overflow-hidden bg-[#050505] flex items-center py-32 lg:py-48">
+      {/* --- CAPA 1: TRANSICIÓN NEGRA (FRANJA) --- */}
+      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#050505] via-[#050505]/80 to-transparent z-20 pointer-events-none"></div>
+
+      {/* --- CAPA 0: FONDO --- */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+
+        {/* ORBE DE COLOR */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={SLIDES[current].id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5 }}
+            className="absolute inset-0 w-full h-full"
+          >
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -right-[40%] w-[800px] h-[800px] rounded-full blur-[150px] opacity-40"
+              style={{ backgroundColor: SLIDES[current].color }}
+            />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={SLIDES[current].id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute inset-0 w-full h-full"
-        >
-          {/* Luces de fondo */}
-          <div
-            className={`absolute top-0 right-0 w-[80%] h-full bg-gradient-to-l ${SLIDES[current].bgGradient} opacity-60 blur-3xl`}
-          />
-          <div
-            className="absolute top-1/2 right-[10%] -translate-y-1/2 w-[300px] h-[300px] md:w-[500px] md:h-[500px] rounded-full blur-[100px] md:blur-[120px] opacity-40"
-            style={{ backgroundColor: SLIDES[current].color }}
-          />
-        </motion.div>
-      </AnimatePresence>
-
-      {/* CAMBIO: Padding top mas grande en movil (pt-32) y padding bottom para controles (pb-24) */}
-      <div className="max-w-7xl mx-auto px-6 w-full h-full flex flex-col justify-center relative z-10 pt-32 pb-24 lg:py-0">
+      {/* --- CAPA 3: CONTENIDO --- */}
+      {/* z-30 para estar encima de la franja negra */}
+      <div className="max-w-7xl mx-auto px-6 w-full h-full relative z-30">
         <AnimatePresence mode="wait">
           <div
             key={SLIDES[current].id}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-12 items-center h-full relative"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center"
           >
-            {/* --- COLUMNA TEXTO --- */}
-            {/* CAMBIO: order-1 en móvil para que el texto salga primero */}
-            <div className="relative z-50 order-1 flex flex-col justify-center">
+            {/* --- COLUMNA 1: TEXTO --- */}
+            <div className="relative order-1 lg:order-2 flex flex-col justify-center">
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }} // Usamos whileInView
-                viewport={{ once: false }} // Animación se repite
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex w-fit items-center gap-2 border border-white/20 bg-white/5 px-3 py-1 mb-4 lg:mb-6 rounded-full backdrop-blur-sm"
+                className="flex items-center gap-4 mb-8"
               >
-                <span
-                  className="w-2 h-2 rounded-full animate-pulse"
-                  style={{ backgroundColor: SLIDES[current].color }}
-                ></span>
-                <span className="text-[10px] font-bold tracking-[0.2em] text-white uppercase">
-                  New Collection 2026
+                <span className="h-[1px] w-12 bg-white/20"></span>
+                <span className="text-xs font-bold tracking-[0.2em] text-white/50 uppercase">
+                  Technical Specifications
                 </span>
               </motion.div>
 
-              <div className="mb-4 lg:mb-6 relative">
+              <div className="mb-8 relative">
                 <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }} // Usamos whileInView
-                  viewport={{ once: false }} // Animación se repite
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false }}
                   transition={{ delay: 0.3 }}
-                  className="text-white text-lg md:text-2xl font-bold tracking-[0.5em] italic opacity-50 mb-[-5px] pl-1"
+                  className="text-white text-3xl md:text-4xl font-extrabold tracking-tight mb-2 uppercase"
                 >
                   {SLIDES[current].brand}
                 </motion.h2>
 
-                {/* CAMBIO: Tamaños de fuente responsivos (text-5xl en movil -> text-100px en desktop) */}
                 <motion.h1
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }} // Usamos whileInView
-                  viewport={{ once: false }} // Animación se repite
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false }}
                   transition={{ delay: 0.4 }}
-                  className="text-5xl sm:text-7xl lg:text-[100px] font-black italic tracking-tighter text-white leading-[0.9] whitespace-nowrap relative z-50"
+                  className="text-5xl sm:text-6xl lg:text-8xl font-extrabold tracking-tight text-white leading-[0.9]"
                 >
                   {SLIDES[current].model}
-                  <span
-                    className="text-transparent bg-clip-text block md:inline"
-                    style={{
-                      backgroundImage: `linear-gradient(to right, white, ${SLIDES[current].color})`,
-                    }}
-                  >
-                    {SLIDES[current].suffix}
-                  </span>
                 </motion.h1>
               </div>
 
               <motion.p
                 initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }} // Usamos whileInView
-                viewport={{ once: false }} // Animación se repite
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: false }}
                 transition={{ delay: 0.5 }}
-                className="text-trexx-red font-bold text-sm md:text-lg tracking-widest uppercase mb-4"
+                className="text-sm md:text-base font-bold tracking-widest uppercase mb-6"
                 style={{ color: SLIDES[current].color }}
               >
-                {SLIDES[current].tagline}
+                // {SLIDES[current].tagline}
               </motion.p>
 
-              {/* CAMBIO: Ocultamos descripción larga en pantallas muy pequeñas o reducimos fuente */}
               <motion.p
                 initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }} // Usamos whileInView
-                viewport={{ once: false }} // Animación se repite
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: false }}
                 transition={{ delay: 0.6 }}
-                className="text-white/60 text-sm md:text-lg max-w-md leading-relaxed mb-6 lg:mb-8 border-l-2 pl-4 line-clamp-3 md:line-clamp-none"
-                style={{ borderColor: `${SLIDES[current].color}40` }}
+                className="text-white/60 text-base md:text-lg max-w-md leading-relaxed mb-10 font-sans"
               >
                 {SLIDES[current].description}
               </motion.p>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }} // Usamos whileInView
-                viewport={{ once: false }} // Animación se repite
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false }}
                 transition={{ delay: 0.7 }}
-                className="flex flex-wrap gap-2 md:gap-3 mb-8 lg:mb-10"
+                className="flex flex-wrap gap-4 mb-12"
               >
                 {SLIDES[current].specs.map((spec, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 md:px-4 rounded-sm hover:border-white/30 transition-colors"
+                    className="flex flex-col items-center justify-center w-20 h-20 bg-white/5 border border-white/10 rounded-sm hover:bg-white/10 transition-colors"
                   >
-                    <span style={{ color: SLIDES[current].color }}>
+                    <span
+                      style={{ color: SLIDES[current].color }}
+                      className="mb-2"
+                    >
                       {spec.icon}
                     </span>
-                    <span className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider">
+                    <span className="text-[9px] font-bold text-white uppercase tracking-wider text-center">
                       {spec.label}
                     </span>
                   </div>
                 ))}
               </motion.div>
 
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }} // Usamos whileInView
-                viewport={{ once: false }} // Animación se repite
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false }}
                 transition={{ delay: 0.8 }}
-                whileHover={{ scale: 1.05, x: 10 }}
-                className="w-full md:w-fit group relative px-8 py-4 bg-transparent border overflow-hidden"
-                style={{ borderColor: SLIDES[current].color }}
+                className="flex items-center gap-8"
               >
-                <div className="absolute inset-0 w-0 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:w-full transition-all duration-500 ease-out" />
-                <span className="relative flex items-center justify-center gap-3 text-white font-black italic tracking-widest uppercase text-sm md:text-base">
-                  Comprar Ahora <ArrowRight size={18} />
-                </span>
-              </motion.button>
+                <button className="group relative px-8 py-4 bg-white text-black font-bold tracking-widest uppercase overflow-hidden hover:bg-gray-200 transition-colors">
+                  <span className="relative flex items-center justify-center gap-3">
+                    Comprar <ArrowRight size={18} />
+                  </span>
+                </button>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={prevSlide}
+                    className="w-12 h-12 flex items-center justify-center border border-white/20 hover:border-white text-white transition-colors rounded-full"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className="w-12 h-12 flex items-center justify-center border border-white/20 hover:border-white text-white transition-colors rounded-full"
+                    style={{ borderColor: SLIDES[current].color }}
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              </motion.div>
             </div>
 
-            {/* --- COLUMNA IMAGEN --- */}
-            {/* CAMBIO: Order-2 para que vaya debajo del texto en móvil. Altura controlada. */}
-            <div className="relative z-10 order-2 lg:order-2 flex justify-center items-center h-[300px] lg:h-auto mt-[-50px] lg:mt-0 pointer-events-none lg:pointer-events-auto">
-              {/* Texto gigante de fondo (oculto en móvil para limpiar la vista) */}
+            {/* --- COLUMNA 2: MEDIA (VIDEO) --- */}
+            <div className="relative order-2 lg:order-1 flex flex-col items-center lg:items-start">
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }} // Usamos whileInView
-                viewport={{ once: false }} // Animación se repite
-                transition={{ duration: 1 }}
-                className="absolute select-none pointer-events-none z-[-1] hidden lg:block"
+                initial={{ opacity: 0, scale: 0.95, x: -30 }}
+                whileInView={{ opacity: 1, scale: 1, x: 0 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.8, ease: "circOut" }}
+                className="relative z-10 w-full max-w-[500px] aspect-square lg:aspect-[4/5] bg-[#0a0a0a] rounded-sm overflow-hidden border border-white/5 shadow-2xl"
+                style={{
+                  boxShadow: `0 30px 60px -30px ${SLIDES[current].color}20`,
+                }}
               >
-                <h1
-                  className="text-[200px] font-black italic text-transparent opacity-10 leading-none tracking-tighter"
-                  style={{ WebkitTextStroke: "2px rgba(255,255,255,0.2)" }}
-                >
-                  {SLIDES[current].model}
-                </h1>
+                {SLIDES[current].type === "video" ? (
+                  <video
+                    ref={videoRef}
+                    src={SLIDES[current].src}
+                    autoPlay
+                    muted
+                    playsInline
+                    onTimeUpdate={handleVideoUpdate}
+                    onEnded={nextSlide}
+                    className="w-full h-full object-cover opacity-90"
+                  />
+                ) : (
+                  <img
+                    src={SLIDES[current].src}
+                    alt={SLIDES[current].model}
+                    className="w-full h-full object-cover opacity-90"
+                  />
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+
+                <div className="absolute top-6 left-6 text-white/10 font-mono text-xl tracking-widest select-none border border-white/10 px-2 py-1">
+                  0{SLIDES[current].id}
+                </div>
               </motion.div>
 
-              <motion.img
-                key={SLIDES[current].image}
-                initial={{ opacity: 0, y: 30, rotate: 5, scale: 0.9 }}
-                whileInView={{
-                  // Usamos whileInView
-                  opacity: 1,
-                  y: 0,
-                  rotate: 0,
-                  scale: 1,
-                  filter: `drop-shadow(0 0 40px ${SLIDES[current].color}50)`,
-                }}
-                viewport={{ once: false }} // Animación se repite
-                transition={{
-                  duration: 0.8,
-                  type: "spring",
-                  stiffness: 100,
-                }}
-                // CAMBIO: Imagen más pequeña en móvil (w-[220px])
-                className="relative z-10 w-[220px] md:w-[450px] lg:w-[500px] object-contain drop-shadow-2xl"
-                src={SLIDES[current].image}
-                alt={SLIDES[current].model}
-                style={{
-                  animation: "float 6s ease-in-out infinite",
-                }}
+              {/* Barra de Progreso */}
+              {SLIDES[current].type === "video" && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="w-full max-w-[500px] h-[2px] bg-white/5 mt-4 overflow-hidden relative z-20"
+                >
+                  <motion.div
+                    className="h-full transition-all duration-100 ease-linear"
+                    style={{
+                      width: `${videoProgress}%`,
+                      backgroundColor: SLIDES[current].color,
+                    }}
+                  />
+                </motion.div>
+              )}
+
+              {/* ELEMENTO GRÁFICO */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="absolute -z-10 top-6 -left-6 w-full h-full border border-white/5 rounded-sm hidden lg:block"
               />
             </div>
           </div>
         </AnimatePresence>
-
-        {/* --- CONTROLES --- */}
-        <div className="absolute bottom-6 md:bottom-10 right-6 md:right-0 flex items-center gap-6 z-40 bg-black/20 backdrop-blur-sm p-2 rounded-lg lg:bg-transparent lg:p-0">
-          <div className="flex items-end gap-2 text-white font-mono">
-            <span className="text-xl md:text-2xl font-bold">
-              0{current + 1}
-            </span>
-            <span className="text-xs md:text-sm text-white/40 mb-1">
-              / 0{SLIDES.length}
-            </span>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={prevSlide}
-              className="p-2 md:p-3 border border-white/10 hover:bg-white/10 text-white transition-colors"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="p-2 md:p-3 border border-white/10 hover:bg-white/10 text-white transition-colors"
-              style={{ borderColor: SLIDES[current].color }}
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-
-        <style>{`
-          @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
-            100% { transform: translateY(0px); }
-          }
-        `}</style>
       </div>
     </section>
   );

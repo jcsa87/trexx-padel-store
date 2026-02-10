@@ -9,14 +9,15 @@ import { useState, useEffect } from "react";
 // --- COMPONENTS ---
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
-import Hero from "./components/home/Hero";
+import VideoHero from "./components/home/VideoHero"; // <--- IMPORTAR NUEVO
+import Hero from "./components/home/Hero"; // El Hero antiguo (ahora secundario)
 import InfiniteMarquee from "./components/ui/InfiniteMarquee";
 import FeaturedProducts from "./components/home/FeaturedProducts";
 import AboutUs from "./components/home/AboutUs";
 import Contact from "./components/home/Contact";
 
 // --- PAGES ---
-import Shop from "./pages/Shop"; // <--- IMPORTAMOS LA NUEVA PÁGINA ÚNICA
+import Shop from "./pages/Shop";
 
 // --- SCROLL TO TOP ---
 const ScrollToTop = () => {
@@ -27,7 +28,7 @@ const ScrollToTop = () => {
   return null;
 };
 
-// --- PLACEHOLDER (Solo para páginas institucionales que aún no existen) ---
+// --- PLACEHOLDER ---
 const PagePlaceholder = ({ title }) => (
   <div className="min-h-screen bg-[#050505] pt-40 pb-20 px-6 flex flex-col items-center justify-center relative overflow-hidden">
     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
@@ -71,38 +72,43 @@ function App() {
               path="/"
               element={
                 <>
+                  {/* 1. VIDEO HERO (Nuevo Principal) */}
                   <div className="relative z-0">
+                    <VideoHero />
+                  </div>
+
+                  {/* 2. PRODUCT HERO (Antiguo Hero, ahora secundario) */}
+                  {/* Le damos un ID para que el botón "Ver Colección" scrollee aquí */}
+                  <div id="product-hero" className="relative z-10">
                     <Hero current={currentSlide} setCurrent={setCurrentSlide} />
                   </div>
 
+                  {/* 3. MARQUEE */}
                   <div className="relative z-20">
                     <InfiniteMarquee />
                   </div>
 
                   <div className="relative z-10 bg-[#050505]">
-                    {/* Productos Destacados (Elite Series) */}
+                    {/* Productos Destacados */}
                     <FeaturedProducts />
 
                     {/* Historia (ADN Argentino) */}
                     <AboutUs />
 
-                    {/* Contacto (Formulario) */}
+                    {/* Contacto */}
                     <Contact />
                   </div>
                 </>
               }
             />
 
-            {/* --- SHOP (CATÁLOGO UNIFICADO) --- */}
-            {/* Todas estas rutas renderizan el mismo componente Shop.
-                El componente Shop se encarga de scrollear a la sección correcta usando el #hash del Navbar */}
+            {/* --- RESTO DE RUTAS (Sin cambios) --- */}
             <Route path="/shop" element={<Shop />} />
             <Route path="/palas" element={<Shop />} />
             <Route path="/ropa" element={<Shop />} />
             <Route path="/zapatillas" element={<Shop />} />
             <Route path="/accesorios" element={<Shop />} />
 
-            {/* --- RUTAS INSTITUCIONALES (Footer) --- */}
             <Route
               path="/historia"
               element={<PagePlaceholder title="NUESTRA HISTORIA" />}
@@ -116,7 +122,6 @@ function App() {
               element={<PagePlaceholder title="TEAM TREXX" />}
             />
 
-            {/* Ruta directa a contacto (opcional, ya está en home) */}
             <Route
               path="/contacto"
               element={
@@ -126,12 +131,10 @@ function App() {
               }
             />
 
-            {/* --- 404 --- */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
 
-        {/* Footer Global */}
         <Footer />
       </div>
     </Router>
