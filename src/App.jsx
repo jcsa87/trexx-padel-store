@@ -9,8 +9,8 @@ import { useState, useEffect } from "react";
 // --- COMPONENTS ---
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
-import VideoHero from "./components/home/VideoHero"; // <--- IMPORTAR NUEVO
-import Hero from "./components/home/Hero"; // El Hero antiguo (ahora secundario)
+import VideoHero from "./components/home/VideoHero";
+import Hero from "./components/home/Hero";
 import InfiniteMarquee from "./components/ui/InfiniteMarquee";
 import FeaturedProducts from "./components/home/FeaturedProducts";
 import AboutUs from "./components/home/AboutUs";
@@ -18,6 +18,7 @@ import Contact from "./components/home/Contact";
 
 // --- PAGES ---
 import Shop from "./pages/Shop";
+import ProductDetail from "./pages/ProductDetail"; // <--- IMPORTANTE: Importar el detalle
 
 // --- SCROLL TO TOP ---
 const ScrollToTop = () => {
@@ -78,7 +79,6 @@ function App() {
                   </div>
 
                   {/* 2. PRODUCT HERO (Antiguo Hero, ahora secundario) */}
-                  {/* Le damos un ID para que el botón "Ver Colección" scrollee aquí */}
                   <div id="product-hero" className="relative z-10">
                     <Hero current={currentSlide} setCurrent={setCurrentSlide} />
                   </div>
@@ -102,13 +102,18 @@ function App() {
               }
             />
 
-            {/* --- RESTO DE RUTAS (Sin cambios) --- */}
+            {/* --- SHOP ROUTES --- */}
             <Route path="/shop" element={<Shop />} />
+            {/* Rutas directas para SEO/Navegación que renderizan el Shop */}
             <Route path="/palas" element={<Shop />} />
             <Route path="/ropa" element={<Shop />} />
             <Route path="/zapatillas" element={<Shop />} />
             <Route path="/accesorios" element={<Shop />} />
 
+            {/* --- PRODUCT DETAIL --- */}
+            <Route path="/shop/product/:id" element={<ProductDetail />} />
+
+            {/* --- PÁGINAS ESTÁTICAS / PLACEHOLDERS --- */}
             <Route
               path="/historia"
               element={<PagePlaceholder title="NUESTRA HISTORIA" />}

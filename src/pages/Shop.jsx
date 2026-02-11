@@ -1,330 +1,502 @@
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Minus } from "lucide-react";
+import {
+  Filter,
+  X,
+  ChevronDown,
+  Check,
+  ArrowUpDown,
+  SlidersHorizontal,
+} from "lucide-react";
 
-// --- BASE DE DATOS DE PRODUCTOS ---
-const ALL_PRODUCTS = {
-  palas: [
-    {
-      id: 1,
-      name: "TREXX RAPTOR",
-      price: "365.900",
-      img: "/shop/palas/raptor.png",
-      color: "#06b6d4",
-    },
-    {
-      id: 2,
-      name: "TREXX DRAGON",
-      price: "365.900",
-      img: "/shop/palas/dragon.png",
-      color: "#dc2626",
-    },
-    {
-      id: 3,
-      name: "TREXX GOLD PRO",
-      price: "354.800",
-      img: "/shop/palas/gold.png",
-      color: "#fbbf24",
-    },
-    {
-      id: 4,
-      name: "MONSTER 05",
-      price: "333.000",
-      img: "/shop/palas/monster.png",
-      color: "#84cc16",
-    },
-  ],
-  ropaHombre: [
-    {
-      id: 5,
-      name: "REMERA TECH MALE",
-      price: "45.000",
-      img: "/shop/ropa-hombre/remera-h.png",
-    },
-    {
-      id: 6,
-      name: "SHORT PRO LINE",
-      price: "38.500",
-      img: "/shop/ropa-hombre/short-h.png",
-    },
-    {
-      id: 7,
-      name: "BUZO TREXX WARM",
-      price: "85.000",
-      img: "/shop/ropa-hombre/buzo-h.png",
-    },
-    {
-      id: 8,
-      name: "CHOMBA MATCH",
-      price: "48.000",
-      img: "/shop/ropa-hombre/chomba-h.png",
-    },
-  ],
-  ropaMujer: [
-    {
-      id: 9,
-      name: "TANK TOP PRO",
-      price: "35.000",
-      img: "/shop/ropa-mujer/tank-m.png",
-    },
-    {
-      id: 10,
-      name: "SKIRT DYNAMIC",
-      price: "42.000",
-      img: "/shop/ropa-mujer/pollera-m.png",
-    },
-    {
-      id: 11,
-      name: "CALZA CORTA",
-      price: "32.000",
-      img: "/shop/ropa-mujer/calza-m.png",
-    },
-    {
-      id: 12,
-      name: "VESTIDO COURT",
-      price: "65.000",
-      img: "/shop/ropa-mujer/vestido-m.png",
-    },
-  ],
-  zapatillas: [
-    {
-      id: 17,
-      name: "AERO SPEED 2.0",
-      price: "125.000",
-      img: "/shop/zapatillas/zap1.png",
-    },
-    {
-      id: 18,
-      name: "COURT STABILITY",
-      price: "118.000",
-      img: "/shop/zapatillas/zap2.png",
-    },
-    {
-      id: 19,
-      name: "TREXX CLAY MASTER",
-      price: "132.000",
-      img: "/shop/zapatillas/zap3.png",
-    },
-    {
-      id: 20,
-      name: "LITE MOTION",
-      price: "98.000",
-      img: "/shop/zapatillas/zap4.png",
-    },
-  ],
-  accesorios: [
-    {
-      id: 13,
-      name: "MUÑEQUERAS XL",
-      price: "12.000",
-      img: "/shop/accesorios/munuquera.png",
-    },
-    {
-      id: 14,
-      name: "GRIP TREXX SENSITIVE",
-      price: "8.500",
-      img: "/shop/accesorios/grip.png",
-    },
-    {
-      id: 15,
-      name: "GORRA VISERA",
-      price: "25.000",
-      img: "/shop/accesorios/gorra.png",
-    },
-    {
-      id: 16,
-      name: "MEDIAS TÉCNICAS",
-      price: "9.000",
-      img: "/shop/accesorios/medias.png",
-    },
-  ],
+// IMPORTAMOS LA BASE DE DATOS
+// Asegúrate de que la ruta sea correcta según dónde guardaste el archivo products.js
+import { PRODUCTS_DB } from "../data/products";
+
+// --- FUNCIÓN AUXILIAR PARA INICIALIZAR FILTROS DESDE URL ---
+// Esto evita el error de ESLint y el re-render innecesario al cargar
+const getInitialFiltersFromUrl = (searchParams) => {
+  const urlCategory = searchParams.get("category");
+  let newCategory = [];
+  let newGender = [];
+
+  if (urlCategory && urlCategory !== "all") {
+    if (urlCategory === "ropaHombre") {
+      newCategory = ["ropa"];
+      newGender = ["hombre"];
+    } else if (urlCategory === "ropaMujer") {
+      newCategory = ["ropa"];
+      newGender = ["mujer"];
+    } else {
+      newCategory = [urlCategory];
+    }
+  }
+
+  return {
+    category: newCategory,
+    gender: newGender,
+    priceRange: [0, 500000],
+    color: [],
+    type: [],
+  };
 };
 
 const Shop = () => {
+  const [searchParams] = useSearchParams();
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [sortOption, setSortOption] = useState("relevant");
+
+  // --- ESTADO DE LOS FILTROS ---
+  // Usamos la función auxiliar para el estado inicial
+  const [filters, setFilters] = useState(() =>
+    getInitialFiltersFromUrl(searchParams),
+  );
+
+  // --- SINCRONIZACIÓN NAVBAR -> FILTROS ---
+  // Este efecto solo se dispara si la URL cambia DESPUÉS de que el componente ya se montó
+  useEffect(() => {
+    setFilters(getInitialFiltersFromUrl(searchParams));
+  }, [searchParams]);
+
+  // --- MOTOR DE FILTRADO Y ORDENAMIENTO ---
+  const processedProducts = useMemo(() => {
+    // 1. Filtrar
+    let result = PRODUCTS_DB.filter((product) => {
+      // Categoría
+      const matchCategory =
+        filters.category.length === 0 ||
+        filters.category.includes(product.category);
+
+      // Género (Lógica inclusiva para Unisex)
+      const matchGender =
+        filters.gender.length === 0 ||
+        !product.gender ||
+        filters.gender.includes(product.gender) ||
+        (product.gender === "unisex" &&
+          (filters.gender.includes("hombre") ||
+            filters.gender.includes("mujer")));
+
+      // Precio
+      const matchPrice = product.price <= filters.priceRange[1];
+
+      // Color
+      const matchColor =
+        filters.color.length === 0 || filters.color.includes(product.color);
+
+      // Tipo (Palas)
+      const matchType =
+        filters.type.length === 0 ||
+        (product.type && filters.type.includes(product.type));
+
+      return (
+        matchCategory && matchGender && matchPrice && matchColor && matchType
+      );
+    });
+
+    // 2. Ordenar
+    if (sortOption === "price_asc") {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortOption === "price_desc") {
+      result.sort((a, b) => b.price - a.price);
+    }
+
+    return result;
+  }, [filters, sortOption]);
+
+  // --- HANDLER DE FILTROS ---
+  const toggleFilter = (type, value) => {
+    setFilters((prev) => {
+      const current = prev[type];
+      const isSelected = current.includes(value);
+      return isSelected
+        ? { ...prev, [type]: current.filter((item) => item !== value) }
+        : { ...prev, [type]: [...current, value] };
+    });
+  };
+
   return (
-    <div className="bg-[#050505] min-h-screen pt-32 pb-20 px-4 md:px-6 overflow-hidden">
-      {/* TÍTULO PRINCIPAL (Restaurado a la versión simple con degradado rojo) */}
-      <div className="max-w-7xl mx-auto mb-12 md:mb-20 text-center md:text-left">
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-4xl sm:text-6xl md:text-8xl font-black italic text-white tracking-tighter uppercase leading-none md:leading-tight"
+    <div className="bg-[#050505] min-h-screen pt-32 pb-20">
+      {/* HEADER: TÍTULO Y CONTROLES */}
+      <div className="max-w-[1400px] mx-auto px-6 mb-8 border-b border-white/10 pb-6">
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 text-center md:text-left">
+          <div className="w-full md:w-auto">
+            <h1 className="text-4xl md:text-6xl font-black italic text-white tracking-tighter uppercase">
+              Catálogo <span className="text-trexx-red">2026</span>
+            </h1>
+            <p className="text-white/40 text-sm mt-2 font-mono">
+              {processedProducts.length} RESULTADOS ENCONTRADOS
+            </p>
+          </div>
+
+          {/* DROPDOWN ORDENAMIENTO */}
+          <div className="relative group w-full md:w-auto flex justify-center md:justify-end">
+            <div className="relative w-full max-w-[250px]">
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="w-full bg-[#111] text-white border border-white/20 px-4 py-3 appearance-none cursor-pointer focus:outline-none focus:border-trexx-red font-bold text-xs uppercase tracking-wider"
+              >
+                <option value="relevant">Más Relevantes</option>
+                <option value="price_asc">Menor Precio</option>
+                <option value="price_desc">Mayor Precio</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
+                <ArrowUpDown size={14} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* BOTÓN FILTROS (SOLO MÓVIL) */}
+        <button
+          onClick={() => setIsMobileFilterOpen(true)}
+          className="md:hidden flex items-center justify-center gap-2 bg-white text-black px-4 py-3 font-bold uppercase text-xs tracking-widest mt-6 w-full hover:bg-gray-200 transition-colors"
         >
-          Equipamiento <br />
-          {/* Degradado minimalista de rojo a rojo oscuro */}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-trexx-red to-red-900">
-            Profesional.
-          </span>
-        </motion.h1>
+          <SlidersHorizontal size={16} /> Filtrar Productos
+        </button>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-        {/* SECCIÓN: PALAS (Abierta por defecto) */}
-        <CollapsibleSection
-          title="Palas"
-          id="palas"
-          products={ALL_PRODUCTS.palas}
-          defaultOpen={true}
-        />
+      {/* LAYOUT PRINCIPAL: SIDEBAR + GRILLA */}
+      <div className="max-w-[1400px] mx-auto px-6 flex gap-12 relative">
+        {/* SIDEBAR IZQUIERDO (DESKTOP) */}
+        <aside className="hidden md:block w-64 flex-shrink-0 sticky top-32 h-[calc(100vh-150px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+          <FilterContent
+            filters={filters}
+            toggleFilter={toggleFilter}
+            setFilters={setFilters}
+          />
+        </aside>
 
-        {/* SECCIÓN: ROPA HOMBRE */}
-        <CollapsibleSection
-          title="Indumentaria Hombre"
-          id="ropa-hombre"
-          products={ALL_PRODUCTS.ropaHombre}
-        />
-
-        {/* SECCIÓN: ROPA MUJER */}
-        <CollapsibleSection
-          title="Indumentaria Mujer"
-          id="ropa-mujer"
-          products={ALL_PRODUCTS.ropaMujer}
-        />
-
-        {/* SECCIÓN: ZAPATILLAS */}
-        <CollapsibleSection
-          title="Zapatillas"
-          id="zapatillas"
-          products={ALL_PRODUCTS.zapatillas}
-        />
-
-        {/* SECCIÓN: ACCESORIOS */}
-        <CollapsibleSection
-          title="Accesorios"
-          id="accesorios"
-          products={ALL_PRODUCTS.accesorios}
-        />
+        {/* GRILLA DE PRODUCTOS */}
+        <div className="flex-1">
+          <AnimatePresence mode="popLayout">
+            {processedProducts.length > 0 ? (
+              <motion.div
+                layout
+                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-12"
+              >
+                {processedProducts.map((product) => (
+                  <ProductCard key={product.id} item={product} />
+                ))}
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-white/30 border border-dashed border-white/10 rounded-lg">
+                <Filter size={48} className="mb-4 opacity-50" />
+                <p className="text-xl font-bold uppercase">No hay resultados</p>
+                <button
+                  onClick={() =>
+                    setFilters({
+                      category: [],
+                      gender: [],
+                      priceRange: [0, 500000],
+                      color: [],
+                      type: [],
+                    })
+                  }
+                  className="mt-4 text-trexx-red hover:underline text-sm font-bold uppercase"
+                >
+                  Limpiar Filtros
+                </button>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
+
+      {/* DRAWER FILTROS (MÓVIL) */}
+      <AnimatePresence>
+        {isMobileFilterOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileFilterOpen(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 md:hidden"
+            />
+            {/* Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-[85%] max-w-[320px] bg-[#111] z-[60] p-6 flex flex-col border-l border-white/10 md:hidden"
+            >
+              <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                <h2 className="text-xl font-black italic text-white uppercase flex items-center gap-2">
+                  <SlidersHorizontal size={20} className="text-trexx-red" />{" "}
+                  Filtros
+                </h2>
+                <button
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="text-white/50 hover:text-white p-1"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 space-y-6">
+                <FilterContent
+                  filters={filters}
+                  toggleFilter={toggleFilter}
+                  setFilters={setFilters}
+                />
+              </div>
+
+              <div className="pt-6 mt-4 border-t border-white/10">
+                <button
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="w-full bg-trexx-red text-white font-bold uppercase py-4 tracking-widest hover:bg-red-700 transition-colors"
+                >
+                  Ver {processedProducts.length} Resultados
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-// --- COMPONENTE DE SECCIÓN COLAPSABLE (ACORDEÓN) ---
-const CollapsibleSection = ({ title, id, products, defaultOpen = false }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  const { hash } = useLocation();
+// --- SUBCOMPONENTES ---
 
-  // EFECTO INTELIGENTE PARA SCROLL
-  useEffect(() => {
-    if (hash) {
-      const targetId = hash.replace("#", "").replace("/", "-");
-      if (targetId === id) {
-        setIsOpen(true);
-        setTimeout(() => {
-          const element = document.getElementById(id);
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }, 100);
-      }
-    }
-  }, [hash, id]);
+// Contenido de los filtros (para Desktop y Móvil)
+const FilterContent = ({ filters, toggleFilter, setFilters }) => (
+  <>
+    <FilterGroup title="Género" defaultOpen={true}>
+      <Checkbox
+        label="Hombre"
+        checked={filters.gender.includes("hombre")}
+        onChange={() => toggleFilter("gender", "hombre")}
+      />
+      <Checkbox
+        label="Mujer"
+        checked={filters.gender.includes("mujer")}
+        onChange={() => toggleFilter("gender", "mujer")}
+      />
+      <Checkbox
+        label="Unisex"
+        checked={filters.gender.includes("unisex")}
+        onChange={() => toggleFilter("gender", "unisex")}
+      />
+    </FilterGroup>
+
+    <FilterGroup title="Categoría" defaultOpen={true}>
+      <Checkbox
+        label="Palas"
+        checked={filters.category.includes("palas")}
+        onChange={() => toggleFilter("category", "palas")}
+      />
+      <Checkbox
+        label="Indumentaria"
+        checked={filters.category.includes("ropa")}
+        onChange={() => toggleFilter("category", "ropa")}
+      />
+      <Checkbox
+        label="Zapatillas"
+        checked={filters.category.includes("zapatillas")}
+        onChange={() => toggleFilter("category", "zapatillas")}
+      />
+      <Checkbox
+        label="Accesorios"
+        checked={filters.category.includes("accesorios")}
+        onChange={() => toggleFilter("category", "accesorios")}
+      />
+    </FilterGroup>
+
+    <FilterGroup title="Tipo de Juego (Palas)" defaultOpen={false}>
+      <Checkbox
+        label="Potencia"
+        checked={filters.type.includes("potencia")}
+        onChange={() => toggleFilter("type", "potencia")}
+      />
+      <Checkbox
+        label="Control"
+        checked={filters.type.includes("control")}
+        onChange={() => toggleFilter("type", "control")}
+      />
+      <Checkbox
+        label="Híbrido"
+        checked={filters.type.includes("hibrida")}
+        onChange={() => toggleFilter("type", "hibrida")}
+      />
+    </FilterGroup>
+
+    <FilterGroup title="Precio Máximo" defaultOpen={true}>
+      <input
+        type="range"
+        min="0"
+        max="500000"
+        step="10000"
+        value={filters.priceRange[1]}
+        onChange={(e) =>
+          setFilters((prev) => ({
+            ...prev,
+            priceRange: [0, parseInt(e.target.value)],
+          }))
+        }
+        className="w-full accent-trexx-red h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
+      />
+      <div className="flex justify-between text-xs text-white/50 mt-2 font-mono">
+        <span>$0</span>
+        <span>${filters.priceRange[1].toLocaleString()}</span>
+      </div>
+    </FilterGroup>
+
+    <FilterGroup title="Color" defaultOpen={true}>
+      <div className="flex flex-wrap gap-3">
+        {["cyan", "red", "gold", "green", "white", "black", "blue", "pink"].map(
+          (color) => (
+            <ColorSwatch
+              key={color}
+              color={color}
+              selected={filters.color.includes(color)}
+              onClick={() => toggleFilter("color", color)}
+            />
+          ),
+        )}
+      </div>
+    </FilterGroup>
+  </>
+);
+
+// Acordeón de Filtro
+const FilterGroup = ({ title, children, defaultOpen = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <section
-      id={id}
-      className="border-b border-white/10 last:border-0 pb-6 scroll-mt-32"
-    >
-      {/* BOTÓN / HEADER (Clickable) */}
+    <div className="border-b border-white/5 pb-6 last:border-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between group py-4 md:py-6 focus:outline-none"
+        className="w-full flex justify-between items-center text-white font-bold uppercase tracking-widest text-xs mb-4 hover:text-trexx-red transition-colors"
       >
-        <div className="flex items-center gap-4 md:gap-6">
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black italic text-white uppercase tracking-wider transition-colors group-hover:text-trexx-red text-left">
-            {title}
-          </h2>
-          {/* (Sin contador de items) */}
-        </div>
-
-        {/* Icono Animado (+ / -) */}
-        <div className="relative w-8 h-8 md:w-10 md:h-10 border border-white/20 rounded-full flex items-center justify-center text-white transition-colors group-hover:border-trexx-red group-hover:bg-trexx-red group-hover:text-white">
-          <motion.div
-            initial={false}
-            animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {isOpen ? <Minus size={20} /> : <Plus size={20} />}
-          </motion.div>
-        </div>
+        {title}
+        <ChevronDown
+          size={14}
+          className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
-
-      {/* CONTENIDO DESPLEGABLE */}
-      <AnimatePresence initial={false}>
+      <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial="collapsed"
-            animate="open"
-            exit="collapsed"
-            variants={{
-              open: { opacity: 1, height: "auto", marginTop: 20 },
-              collapsed: { opacity: 0, height: 0, marginTop: 0 },
-            }}
-            transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
-            className="overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden space-y-3 pl-1"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-12 pb-8">
-              {products.map((p, index) => (
-                <ProductCard key={p.id} item={p} index={index} />
-              ))}
-            </div>
+            {children}
           </motion.div>
         )}
       </AnimatePresence>
-    </section>
+    </div>
   );
 };
 
-// --- TARJETA DE PRODUCTO ---
-const ProductCard = ({ item, index }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.5, delay: index * 0.05 }}
-    whileHover={{ y: -5 }}
-    className="group cursor-pointer flex flex-col h-full bg-[#0a0a0a] border border-white/5 hover:border-white/20 transition-all duration-300"
-  >
-    {/* Contenedor Imagen */}
-    <div className="relative aspect-[4/5] overflow-hidden p-6 flex items-center justify-center">
-      <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-      <img
-        src={item.img}
-        alt={item.name}
-        className="relative z-10 w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-110"
-      />
-
-      {item.color && (
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full opacity-0 group-hover:opacity-20 blur-[40px] transition-opacity duration-500"
-          style={{ backgroundColor: item.color }}
-        ></div>
-      )}
+// Checkbox Personalizado
+const Checkbox = ({ label, checked, onChange }) => (
+  <label className="flex items-center gap-3 cursor-pointer group select-none">
+    <div
+      className={`w-4 h-4 border transition-all duration-200 flex items-center justify-center rounded-sm ${
+        checked
+          ? "bg-trexx-red border-trexx-red"
+          : "border-white/30 group-hover:border-white"
+      }`}
+    >
+      {checked && <Check size={10} className="text-white" strokeWidth={4} />}
     </div>
+    <span
+      className={`text-sm uppercase tracking-wide transition-colors ${
+        checked
+          ? "text-white font-bold"
+          : "text-white/50 group-hover:text-white"
+      }`}
+    >
+      {label}
+    </span>
+    <input
+      type="checkbox"
+      className="hidden"
+      checked={checked}
+      onChange={onChange}
+    />
+  </label>
+);
 
-    {/* Info Producto */}
-    <div className="p-4 mt-auto border-t border-white/5">
-      <h3 className="text-white font-bold text-xs sm:text-sm tracking-widest uppercase truncate">
-        {item.name}
-      </h3>
-      <div className="flex justify-between items-center mt-2">
-        <p className="text-gray-400 font-mono text-base sm:text-lg group-hover:text-white transition-colors">
-          ${item.price}
-        </p>
-        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-          <Plus size={12} />
+// Selector de Color
+const ColorSwatch = ({ color, selected, onClick }) => {
+  const bgMap = {
+    cyan: "bg-cyan-500",
+    red: "bg-red-600",
+    gold: "bg-yellow-500",
+    green: "bg-green-600",
+    white: "bg-white",
+    black: "bg-gray-800",
+    blue: "bg-blue-600",
+    pink: "bg-pink-500",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-6 h-6 rounded-full border-2 transition-all duration-200 ${
+        bgMap[color] || "bg-gray-500"
+      } ${
+        selected
+          ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+          : "border-transparent opacity-50 hover:opacity-100 hover:scale-110"
+      }`}
+    />
+  );
+};
+
+// Tarjeta de Producto (Linkeada al detalle)
+const ProductCard = ({ item }) => (
+  <Link to={`/shop/product/${item.id}`} className="group cursor-pointer block">
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="relative aspect-[3/4] bg-[#0a0a0a] rounded-sm overflow-hidden mb-4 border border-white/5 group-hover:border-white/20 transition-all duration-300">
+        <img
+          src={item.img}
+          alt={item.name}
+          className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500"
+        />
+
+        {/* Botón rápido (solo visual) */}
+        <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+          <button className="w-full bg-white text-black font-bold uppercase text-xs py-3 tracking-widest hover:bg-trexx-red hover:text-white transition-colors">
+            Ver Detalles
+          </button>
         </div>
+
+        {/* Badge "Hot" */}
+        {item.price < 50000 && item.category !== "accesorios" && (
+          <div className="absolute top-3 left-3 bg-trexx-red text-white text-[9px] font-black px-2 py-1 uppercase tracking-wider rounded-sm">
+            Hot
+          </div>
+        )}
       </div>
 
-      {/* Etiquetas Solo Desktop (para limpiar mobile) */}
-      <div className="hidden md:flex mt-3 items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[9px] text-white/40 font-bold uppercase tracking-wider">
-        <span>6 Cuotas</span>
+      <div>
+        <h3 className="text-white font-bold text-sm tracking-wide uppercase truncate">
+          {item.name}
+        </h3>
+        <p className="text-gray-400 font-mono text-xs mt-1 font-bold">
+          ${item.price.toLocaleString()}
+        </p>
+        <p className="text-[10px] text-white/30 uppercase mt-1">
+          6 Cuotas sin interés
+        </p>
       </div>
-    </div>
-  </motion.div>
+    </motion.div>
+  </Link>
 );
 
 export default Shop;
