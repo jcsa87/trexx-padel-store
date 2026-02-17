@@ -5,20 +5,19 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
+import { AnimatePresence, LazyMotion, domAnimation } from "framer-motion";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // --- CONTEXTO DEL CARRITO ---
 import { CartProvider } from "./context/CartContext";
 
-// --- COMPONENTS ---
-// 1. Cargamos de forma normal los componentes críticos del "Above the Fold"
+// --- COMPONENTS CRÍTICOS ---
 import Navbar from "./components/layout/Navbar";
-import NewReleaseHero from "./components/home/NewReleaseHero"; // El Hero principal
+import NewReleaseHero from "./components/home/NewReleaseHero";
 import CartDrawer from "./components/cart/CartDrawer";
+import Preloader from "./components/ui/Preloader"; // Asegúrate de crear este archivo
 
-// --- CORRECCIÓN AQUÍ: Agregamos LazyMotion al import ---
-import { LazyMotion, domAnimation } from "framer-motion";
-
-// 2. LAZY LOADING: El resto se carga solo cuando se necesita
+// --- COMPONENTS LAZY ---
 const Footer = lazy(() => import("./components/layout/Footer"));
 const VideoHero = lazy(() => import("./components/home/VideoHero"));
 const Hero = lazy(() => import("./components/home/Hero"));
@@ -30,11 +29,11 @@ const AboutUs = lazy(() => import("./components/home/AboutUs"));
 const Contact = lazy(() => import("./components/home/Contact"));
 const SectionDivider = lazy(() => import("./components/ui/SectionDivider"));
 
-// --- PAGES (LAZY) ---
+// --- PAGES LAZY ---
 const Shop = lazy(() => import("./pages/Shop"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 
-// --- SCROLL TO TOP ---
+// --- UTILS ---
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -43,7 +42,6 @@ const ScrollToTop = () => {
   return null;
 };
 
-// --- PLACEHOLDER ---
 const PagePlaceholder = ({ title }) => (
   <div className="min-h-screen bg-[#050505] pt-40 pb-20 px-6 flex flex-col items-center justify-center relative overflow-hidden">
     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
@@ -70,23 +68,31 @@ const NotFound = () => (
   </div>
 );
 
-// --- LOADING SPINNER ---
 const PageLoader = () => (
-  <div className="h-screen w-full flex items-center justify-center bg-[#050505] text-trexx-red font-bold tracking-widest animate-pulse">
-    CARGANDO...
+  <div className="h-screen w-full flex items-center justify-center bg-[#050505] text-trexx-red font-bold tracking-widest animate-pulse uppercase text-xs">
+    Cargando sección...
   </div>
 );
 
 function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   return (
     <CartProvider>
-      {/* LazyMotion reduce el tamaño del bundle inicial de Framer Motion */}
       <LazyMotion features={domAnimation}>
+        {/* Pantalla de carga inicial */}
+        <AnimatePresence mode="wait">
+          {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
+        </AnimatePresence>
+
         <Router>
           <ScrollToTop />
-          <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col">
+
+          {/* Contenedor principal con transición de opacidad al terminar de cargar */}
+          <div
+            className={`min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col transition-opacity duration-1000 ${isLoading ? "opacity-0 h-screen overflow-hidden" : "opacity-100"}`}
+          >
             <CartDrawer />
             <Navbar />
 
@@ -98,12 +104,10 @@ function App() {
                     path="/"
                     element={
                       <>
-                        {/* El Hero principal carga directo para evitar saltos */}
                         <div className="relative z-0">
                           <NewReleaseHero />
                         </div>
 
-                        {/* El resto se carga diferido */}
                         <div className="relative z-0">
                           <VideoHero />
                         </div>
@@ -186,6 +190,7 @@ function App() {
           </div>
         </Router>
       </LazyMotion>
+      <SpeedInsights />
     </CartProvider>
   );
 }
