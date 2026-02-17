@@ -4,7 +4,7 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { AnimatePresence, LazyMotion, domAnimation } from "framer-motion";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
@@ -15,7 +15,7 @@ import { CartProvider } from "./context/CartContext";
 import Navbar from "./components/layout/Navbar";
 import NewReleaseHero from "./components/home/NewReleaseHero";
 import CartDrawer from "./components/cart/CartDrawer";
-import Preloader from "./components/ui/Preloader"; // Asegúrate de crear este archivo
+import Preloader from "./components/ui/Preloader";
 
 // --- COMPONENTS LAZY ---
 const Footer = lazy(() => import("./components/layout/Footer"));
@@ -57,17 +57,6 @@ const PagePlaceholder = ({ title }) => (
   </div>
 );
 
-const NotFound = () => (
-  <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-white">
-    <h1 className="text-9xl font-black text-trexx-red italic tracking-tighter">
-      404
-    </h1>
-    <p className="text-xl tracking-[0.5em] uppercase mt-4">
-      Página no encontrada
-    </p>
-  </div>
-);
-
 const PageLoader = () => (
   <div className="h-screen w-full flex items-center justify-center bg-[#050505] text-trexx-red font-bold tracking-widest animate-pulse uppercase text-xs">
     Cargando sección...
@@ -76,22 +65,38 @@ const PageLoader = () => (
 
 function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // LOGICA DE CARGA REAL
+  const [itemsLoaded, setItemsLoaded] = useState(0);
+  const totalItemsToLoad = 2; // 1. Imagen del NewReleaseHero + 2. Video del VideoHero
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleItemLoaded = useCallback(() => {
+    setItemsLoaded((prev) => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    if (itemsLoaded >= totalItemsToLoad) {
+      // Pequeño delay extra para que la transición sea fluida
+      const timeout = setTimeout(() => setIsLoading(false), 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [itemsLoaded, totalItemsToLoad]);
 
   return (
     <CartProvider>
       <LazyMotion features={domAnimation}>
-        {/* Pantalla de carga inicial */}
         <AnimatePresence mode="wait">
-          {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
+          {isLoading && <Preloader />}
         </AnimatePresence>
 
         <Router>
           <ScrollToTop />
 
-          {/* Contenedor principal con transición de opacidad al terminar de cargar */}
           <div
-            className={`min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col transition-opacity duration-1000 ${isLoading ? "opacity-0 h-screen overflow-hidden" : "opacity-100"}`}
+            className={`min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col transition-opacity duration-1000 ${
+              isLoading ? "opacity-0 h-screen overflow-hidden" : "opacity-100"
+            }`}
           >
             <CartDrawer />
             <Navbar />
@@ -99,17 +104,16 @@ function App() {
             <main className="flex-grow">
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                  {/* --- HOME PAGE --- */}
                   <Route
                     path="/"
                     element={
                       <>
                         <div className="relative z-0">
-                          <NewReleaseHero />
+                          <NewReleaseHero onImageLoad={handleItemLoaded} />
                         </div>
 
                         <div className="relative z-0">
-                          <VideoHero />
+                          <VideoHero onVideoLoad={handleItemLoaded} />
                         </div>
 
                         <div className="relative z-20">
@@ -118,27 +122,23 @@ function App() {
 
                         <div className="relative z-10 bg-[#050505]">
                           <FeaturedProducts />
-
                           <SectionDivider
                             text1="High Performance"
                             text2="Carbon Innovation"
                             text3="Next Gen Padel"
                             reverse={true}
                           />
-
                           <div id="product-hero" className="relative z-10">
                             <Hero
                               current={currentSlide}
                               setCurrent={setCurrentSlide}
                             />
                           </div>
-
                           <SectionDivider
                             text1="Argentine DNA"
                             text2="Professional Grade"
                             text3="Break The Limits"
                           />
-
                           <AboutUs />
                           <Contact />
                         </div>
@@ -146,17 +146,12 @@ function App() {
                     }
                   />
 
-                  {/* --- SHOP ROUTES --- */}
                   <Route path="/shop" element={<Shop />} />
                   <Route path="/palas" element={<Shop />} />
                   <Route path="/ropa" element={<Shop />} />
                   <Route path="/zapatillas" element={<Shop />} />
                   <Route path="/accesorios" element={<Shop />} />
-
-                  {/* --- PRODUCT DETAIL --- */}
                   <Route path="/shop/product/:id" element={<ProductDetail />} />
-
-                  {/* --- PÁGINAS ESTÁTICAS --- */}
                   <Route
                     path="/historia"
                     element={<PagePlaceholder title="NUESTRA HISTORIA" />}
@@ -169,7 +164,6 @@ function App() {
                     path="/jugadores"
                     element={<PagePlaceholder title="TEAM TREXX" />}
                   />
-
                   <Route
                     path="/contacto"
                     element={
@@ -178,8 +172,7 @@ function App() {
                       </div>
                     }
                   />
-
-                  <Route path="*" element={<NotFound />} />
+                  <Route path="*" element={<PagePlaceholder title="404" />} />
                 </Routes>
               </Suspense>
             </main>

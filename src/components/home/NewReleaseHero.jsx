@@ -86,16 +86,15 @@ const Particle = () => {
   );
 };
 
-const NewReleaseHero = () => {
+// RECIBIMOS onImageLoad DESDE APP.JSX
+const NewReleaseHero = ({ onImageLoad }) => {
   return (
     <section className="relative min-h-screen w-full bg-[#050505] overflow-hidden pt-32 pb-20 lg:pt-40 flex flex-col justify-center">
       {/* --- FONDO AMBIENTAL --- */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Ruido y Viñeta (Estáticos, muy ligeros) */}
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#050505_100%)] opacity-90"></div>
 
-        {/* Luces Ambientales (Loops infinitos suaves, no dependen de scroll) */}
         <motion.div
           style={{ willChange: "transform, opacity" }}
           animate={{
@@ -121,7 +120,6 @@ const NewReleaseHero = () => {
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-trexx-red/20 blur-[150px] rounded-full mix-blend-screen"
         />
 
-        {/* Partículas (25 es un buen balance) */}
         {[...Array(25)].map((_, i) => (
           <Particle key={i} />
         ))}
@@ -133,10 +131,9 @@ const NewReleaseHero = () => {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }} // <--- OPTIMIZACIÓN: once: true
+            viewport={{ once: true, amount: 0.3 }}
             className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left order-2 lg:order-1"
           >
-            {/* Badge */}
             <motion.div
               variants={fadeInUpVariant}
               custom={0.1}
@@ -151,13 +148,12 @@ const NewReleaseHero = () => {
               </span>
             </motion.div>
 
-            {/* Título */}
             <motion.div variants={fadeInUpVariant} custom={0.2}>
               <h1 className="text-5xl md:text-7xl font-black italic text-white tracking-tighter uppercase leading-[0.9] mb-4 overflow-hidden relative pr-4">
                 <motion.span
                   initial={{ y: "100%" }}
                   whileInView={{ y: 0 }}
-                  viewport={{ once: true }} // <--- OPTIMIZACIÓN
+                  viewport={{ once: true }}
                   transition={{ duration: 0.8, ease: "circOut", delay: 0.2 }}
                   className="block"
                 >
@@ -168,7 +164,7 @@ const NewReleaseHero = () => {
                 <motion.span
                   initial={{ y: "100%" }}
                   whileInView={{ y: 0 }}
-                  viewport={{ once: true }} // <--- OPTIMIZACIÓN
+                  viewport={{ once: true }}
                   transition={{ duration: 0.8, ease: "circOut", delay: 0.3 }}
                   className="block text-transparent bg-clip-text bg-gradient-to-r from-trexx-red to-red-800"
                 >
@@ -186,7 +182,6 @@ const NewReleaseHero = () => {
               agresividad del carbono 18K y el control del núcleo Pro Eva Soft.
             </motion.p>
 
-            {/* Precio y Botones */}
             <motion.div
               variants={fadeInUpVariant}
               custom={0.5}
@@ -202,7 +197,7 @@ const NewReleaseHero = () => {
                 to={`/shop/product/${LAUNCH_PRODUCT.id}`}
                 className="w-full sm:w-auto"
               >
-                <button className="group relative w-full sm:w-auto px-8 py-4 bg-white text-black font-black tracking-widest uppercase overflow-hidden transition-transform duration-300 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_50px_rgba(220,38,38,0.4)]">
+                <button className="group relative w-full sm:w-auto px-8 py-4 bg-white text-black font-black italic tracking-widest uppercase overflow-hidden transition-transform duration-300 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_50px_rgba(220,38,38,0.4)]">
                   <span className="relative flex items-center justify-center gap-3 z-10 transition-colors group-hover:text-trexx-red">
                     Comprar Ahora <ArrowRight size={18} />
                   </span>
@@ -211,7 +206,6 @@ const NewReleaseHero = () => {
               </Link>
             </motion.div>
 
-            {/* Badge de Funda */}
             <motion.div
               variants={fadeInUpVariant}
               custom={0.6}
@@ -235,7 +229,7 @@ const NewReleaseHero = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: [0, 1, 0] }}
-                viewport={{ once: true }} // <--- OPTIMIZACIÓN
+                viewport={{ once: true }}
                 transition={{ duration: 2, delay: 1 }}
                 className="absolute inset-0 bg-gradient-to-r from-trexx-red/0 via-trexx-red/10 to-trexx-red/0"
               />
@@ -246,19 +240,18 @@ const NewReleaseHero = () => {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }} // <--- OPTIMIZACIÓN
+            viewport={{ once: true, amount: 0.3 }}
             className="lg:col-span-4 order-1 lg:order-2 relative h-[500px] lg:h-[700px] flex items-center justify-center z-20"
           >
-            {/* Anillos giratorios */}
             <motion.div
               style={{ willChange: "transform" }}
               initial={{ scale: 0, opacity: 0, rotate: 0 }}
               whileInView={{ scale: 1, opacity: 0.8, rotate: 360 }}
-              viewport={{ once: true }} // <--- OPTIMIZACIÓN
+              viewport={{ once: true }}
               transition={{
                 scale: { duration: 1.5, ease: "circOut" },
                 opacity: { duration: 1 },
-                rotate: { duration: 60, repeat: Infinity, ease: "linear" }, // Rotación lenta infinita
+                rotate: { duration: 60, repeat: Infinity, ease: "linear" },
               }}
               className="absolute w-[400px] h-[400px] lg:w-[550px] lg:h-[550px] border border-white/5 rounded-full"
             ></motion.div>
@@ -266,7 +259,7 @@ const NewReleaseHero = () => {
               style={{ willChange: "transform" }}
               initial={{ scale: 0, opacity: 0, rotate: 0 }}
               whileInView={{ scale: 1, opacity: 0.6, rotate: -360 }}
-              viewport={{ once: true }} // <--- OPTIMIZACIÓN
+              viewport={{ once: true }}
               transition={{
                 scale: { duration: 1.5, ease: "circOut", delay: 0.2 },
                 opacity: { duration: 1 },
@@ -279,21 +272,22 @@ const NewReleaseHero = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: 60, rotateX: 10 }}
               whileInView={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
-              viewport={{ once: true }} // <--- OPTIMIZACIÓN: La entrada es una vez
+              viewport={{ once: true }}
               transition={{ duration: 1.4, ease: "circOut", delay: 0.2 }}
               className="relative z-20 w-auto h-[90%]"
             >
               <motion.img
                 src={LAUNCH_PRODUCT.images.main}
+                onLoad={onImageLoad} // <--- SEÑAL DE CARGA AQUÍ
                 alt="TREXX SPREAD PRO 2026"
                 className="w-full h-full object-contain drop-shadow-[0_35px_80px_rgba(220,38,38,0.5)]"
                 style={{ willChange: "transform" }}
                 animate={{
-                  y: [0, -20, 0], // Movimiento de flotación (loop)
+                  y: [0, -20, 0],
                   rotate: [0, 1, 0],
                 }}
                 transition={{
-                  duration: 8, // Lento y suave
+                  duration: 8,
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
@@ -303,11 +297,10 @@ const NewReleaseHero = () => {
 
           {/* 3. COLUMNA DERECHA: SPECS */}
           <div className="lg:col-span-3 order-3 flex flex-col gap-4 relative z-30">
-            {/* TARJETA MATERIAL */}
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }} // <--- OPTIMIZACIÓN
+              viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               className="group relative h-36 w-full rounded-xl overflow-hidden border border-white/10 hover:border-trexx-red/50 transition-colors cursor-default shadow-2xl"
             >
@@ -331,12 +324,11 @@ const NewReleaseHero = () => {
               </div>
             </motion.div>
 
-            {/* LISTA SPECS */}
             <motion.div
               variants={staggerContainerVariant}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, amount: 0.1 }} // <--- OPTIMIZACIÓN
+              viewport={{ once: true, amount: 0.1 }}
               className="space-y-3"
             >
               <SpecItem
@@ -367,7 +359,6 @@ const NewReleaseHero = () => {
   );
 };
 
-// Subcomponente simple para Specs
 const SpecItem = ({ label, value, icon }) => (
   <motion.div
     variants={{
