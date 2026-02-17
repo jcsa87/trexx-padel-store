@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -8,14 +8,13 @@ import {
   Check,
   ArrowUpDown,
   SlidersHorizontal,
+  Search,
 } from "lucide-react";
 
 // IMPORTAMOS LA BASE DE DATOS
-// Asegúrate de que la ruta sea correcta según dónde guardaste el archivo products.js
 import { PRODUCTS_DB } from "../data/products";
 
-// --- FUNCIÓN AUXILIAR PARA INICIALIZAR FILTROS DESDE URL ---
-// Esto evita el error de ESLint y el re-render innecesario al cargar
+// --- FUNCIÓN AUXILIAR PARA INICIALIZAR FILTROS ---
 const getInitialFiltersFromUrl = (searchParams) => {
   const urlCategory = searchParams.get("category");
   let newCategory = [];
@@ -44,31 +43,43 @@ const getInitialFiltersFromUrl = (searchParams) => {
 
 const Shop = () => {
   const [searchParams] = useSearchParams();
+
+  // Estado para controlar cambio de URL (Solución ESLint)
+  const currentCategoryParam = searchParams.get("category");
+  const [prevCategoryParam, setPrevCategoryParam] =
+    useState(currentCategoryParam);
+
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [sortOption, setSortOption] = useState("relevant");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // --- ESTADO DE LOS FILTROS ---
-  // Usamos la función auxiliar para el estado inicial
   const [filters, setFilters] = useState(() =>
     getInitialFiltersFromUrl(searchParams),
   );
 
-  // --- SINCRONIZACIÓN NAVBAR -> FILTROS ---
-  // Este efecto solo se dispara si la URL cambia DESPUÉS de que el componente ya se montó
-  useEffect(() => {
+  // --- PATRÓN: RESET DE ESTADO EN RENDER (Reemplaza al useEffect) ---
+  // Si la categoría en la URL cambia, reseteamos los filtros inmediatamente.
+  if (currentCategoryParam !== prevCategoryParam) {
+    setPrevCategoryParam(currentCategoryParam);
     setFilters(getInitialFiltersFromUrl(searchParams));
-  }, [searchParams]);
+    setSearchQuery(""); // Limpiamos la búsqueda al cambiar de sección
+  }
 
   // --- MOTOR DE FILTRADO Y ORDENAMIENTO ---
   const processedProducts = useMemo(() => {
-    // 1. Filtrar
     let result = PRODUCTS_DB.filter((product) => {
+      // Búsqueda por Texto
+      const matchSearch = product.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
       // Categoría
       const matchCategory =
         filters.category.length === 0 ||
         filters.category.includes(product.category);
 
-      // Género (Lógica inclusiva para Unisex)
+      // Género
       const matchGender =
         filters.gender.length === 0 ||
         !product.gender ||
@@ -84,17 +95,22 @@ const Shop = () => {
       const matchColor =
         filters.color.length === 0 || filters.color.includes(product.color);
 
-      // Tipo (Palas)
+      // Tipo
       const matchType =
         filters.type.length === 0 ||
         (product.type && filters.type.includes(product.type));
 
       return (
-        matchCategory && matchGender && matchPrice && matchColor && matchType
+        matchSearch &&
+        matchCategory &&
+        matchGender &&
+        matchPrice &&
+        matchColor &&
+        matchType
       );
     });
 
-    // 2. Ordenar
+    // Ordenar
     if (sortOption === "price_asc") {
       result.sort((a, b) => a.price - b.price);
     } else if (sortOption === "price_desc") {
@@ -102,7 +118,7 @@ const Shop = () => {
     }
 
     return result;
-  }, [filters, sortOption]);
+  }, [filters, sortOption, searchQuery]);
 
   // --- HANDLER DE FILTROS ---
   const toggleFilter = (type, value) => {
@@ -117,10 +133,11 @@ const Shop = () => {
 
   return (
     <div className="bg-[#050505] min-h-screen pt-32 pb-20">
-      {/* HEADER: TÍTULO Y CONTROLES */}
+      {/* HEADER */}
       <div className="max-w-[1400px] mx-auto px-6 mb-8 border-b border-white/10 pb-6">
-        <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 text-center md:text-left">
-          <div className="w-full md:w-auto">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 text-left">
+          {/* TÍTULO */}
+          <div className="w-full lg:w-auto">
             <h1 className="text-4xl md:text-6xl font-black italic text-white tracking-tighter uppercase">
               Catálogo <span className="text-trexx-red">2026</span>
             </h1>
@@ -129,9 +146,33 @@ const Shop = () => {
             </p>
           </div>
 
-          {/* DROPDOWN ORDENAMIENTO */}
-          <div className="relative group w-full md:w-auto flex justify-center md:justify-end">
-            <div className="relative w-full max-w-[250px]">
+          {/* CONTROLES */}
+          <div className="w-full lg:w-auto flex flex-col md:flex-row gap-4 items-center">
+            {/* BUSCADOR */}
+            <div className="relative w-full md:w-80 group">
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-trexx-red transition-colors"
+                size={18}
+              />
+              <input
+                type="text"
+                placeholder="Buscar producto..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#111] text-white border border-white/20 pl-12 pr-4 py-3 focus:outline-none focus:border-trexx-red font-bold text-xs uppercase tracking-wider placeholder:text-white/30 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* ORDENAMIENTO */}
+            <div className="relative w-full md:w-64">
               <select
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value)}
@@ -148,7 +189,7 @@ const Shop = () => {
           </div>
         </div>
 
-        {/* BOTÓN FILTROS (SOLO MÓVIL) */}
+        {/* BOTÓN FILTROS MÓVIL */}
         <button
           onClick={() => setIsMobileFilterOpen(true)}
           className="md:hidden flex items-center justify-center gap-2 bg-white text-black px-4 py-3 font-bold uppercase text-xs tracking-widest mt-6 w-full hover:bg-gray-200 transition-colors"
@@ -157,9 +198,9 @@ const Shop = () => {
         </button>
       </div>
 
-      {/* LAYOUT PRINCIPAL: SIDEBAR + GRILLA */}
+      {/* CONTENIDO PRINCIPAL */}
       <div className="max-w-[1400px] mx-auto px-6 flex gap-12 relative">
-        {/* SIDEBAR IZQUIERDO (DESKTOP) */}
+        {/* SIDEBAR (DESKTOP) */}
         <aside className="hidden md:block w-64 flex-shrink-0 sticky top-32 h-[calc(100vh-150px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           <FilterContent
             filters={filters}
@@ -168,12 +209,15 @@ const Shop = () => {
           />
         </aside>
 
-        {/* GRILLA DE PRODUCTOS */}
+        {/* GRILLA PRODUCTOS */}
         <div className="flex-1">
           <AnimatePresence mode="popLayout">
             {processedProducts.length > 0 ? (
               <motion.div
                 layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-12"
               >
                 {processedProducts.map((product) => (
@@ -182,21 +226,26 @@ const Shop = () => {
               </motion.div>
             ) : (
               <div className="flex flex-col items-center justify-center py-20 text-white/30 border border-dashed border-white/10 rounded-lg">
-                <Filter size={48} className="mb-4 opacity-50" />
-                <p className="text-xl font-bold uppercase">No hay resultados</p>
+                <Search size={48} className="mb-4 opacity-50" />
+                <p className="text-xl font-bold uppercase">
+                  {searchQuery
+                    ? `No hay resultados para "${searchQuery}"`
+                    : "No hay productos"}
+                </p>
                 <button
-                  onClick={() =>
+                  onClick={() => {
                     setFilters({
                       category: [],
                       gender: [],
                       priceRange: [0, 500000],
                       color: [],
                       type: [],
-                    })
-                  }
+                    });
+                    setSearchQuery("");
+                  }}
                   className="mt-4 text-trexx-red hover:underline text-sm font-bold uppercase"
                 >
-                  Limpiar Filtros
+                  Limpiar Todo
                 </button>
               </div>
             )}
@@ -204,11 +253,10 @@ const Shop = () => {
         </div>
       </div>
 
-      {/* DRAWER FILTROS (MÓVIL) */}
+      {/* DRAWER MÓVIL */}
       <AnimatePresence>
         {isMobileFilterOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -216,7 +264,6 @@ const Shop = () => {
               onClick={() => setIsMobileFilterOpen(false)}
               className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 md:hidden"
             />
-            {/* Panel */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -263,7 +310,6 @@ const Shop = () => {
 
 // --- SUBCOMPONENTES ---
 
-// Contenido de los filtros (para Desktop y Móvil)
 const FilterContent = ({ filters, toggleFilter, setFilters }) => (
   <>
     <FilterGroup title="Género" defaultOpen={true}>
@@ -363,7 +409,6 @@ const FilterContent = ({ filters, toggleFilter, setFilters }) => (
   </>
 );
 
-// Acordeón de Filtro
 const FilterGroup = ({ title, children, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -395,7 +440,6 @@ const FilterGroup = ({ title, children, defaultOpen = false }) => {
   );
 };
 
-// Checkbox Personalizado
 const Checkbox = ({ label, checked, onChange }) => (
   <label className="flex items-center gap-3 cursor-pointer group select-none">
     <div
@@ -425,7 +469,6 @@ const Checkbox = ({ label, checked, onChange }) => (
   </label>
 );
 
-// Selector de Color
 const ColorSwatch = ({ color, selected, onClick }) => {
   const bgMap = {
     cyan: "bg-cyan-500",
@@ -452,7 +495,6 @@ const ColorSwatch = ({ color, selected, onClick }) => {
   );
 };
 
-// Tarjeta de Producto (Linkeada al detalle)
 const ProductCard = ({ item }) => (
   <Link to={`/shop/product/${item.id}`} className="group cursor-pointer block">
     <motion.div
@@ -469,7 +511,7 @@ const ProductCard = ({ item }) => (
           className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500"
         />
 
-        {/* Botón rápido (solo visual) */}
+        {/* Botón rápido */}
         <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <button className="w-full bg-white text-black font-bold uppercase text-xs py-3 tracking-widest hover:bg-trexx-red hover:text-white transition-colors">
             Ver Detalles

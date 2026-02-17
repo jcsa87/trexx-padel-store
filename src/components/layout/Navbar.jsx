@@ -1,6 +1,6 @@
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { ShoppingBag, Menu, X, User, Search, ChevronDown } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { ShoppingBag, Menu, X, User, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 import {
   motion,
   useScroll,
@@ -8,7 +8,7 @@ import {
   AnimatePresence,
 } from "framer-motion";
 
-// IMPORTAMOS CONTEXTO DEL CARRITO
+// --- IMPORTANTE: CORRECCIÓN DEL ERROR 'useCart is not defined' ---
 import { useCart } from "../../context/CartContext";
 
 // IMPORTAMOS LOS MODALES
@@ -34,35 +34,27 @@ const MENU_ITEMS = [
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const [isHidden, setIsHidden] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [authModal, setAuthModal] = useState(null);
 
-  // Hooks del Carrito
+  // Hooks del Carrito (Ahora sí importados)
   const { cartCount, toggleCart } = useCart();
 
   const [searchParams] = useSearchParams();
   const currentCategory = searchParams.get("category");
   const location = useLocation();
 
-  const searchInputRef = useRef(null);
   const { scrollY } = useScroll();
 
-  // CORRECCIÓN ESLINT: useEffect condicional
+  // useEffect condicional para cerrar menú al navegar
   useEffect(() => {
     if (isOpen) {
       setIsOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
-
-  useEffect(() => {
-    if (isSearchOpen && searchInputRef.current) {
-      setTimeout(() => searchInputRef.current.focus(), 100);
-    }
-  }, [isSearchOpen]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
@@ -116,133 +108,90 @@ const Navbar = () => {
             />
           </Link>
 
-          {/* MENÚ DE FILTROS (DESKTOP) */}
+          {/* MENÚ DE NAVEGACIÓN (DESKTOP) */}
           <div className="flex-1 flex justify-center pl-0 md:pl-8">
-            <AnimatePresence mode="wait">
-              {isSearchOpen ? (
-                <motion.div
-                  key="search-bar"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="w-full max-w-xl flex items-center gap-4"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="hidden md:flex items-center gap-8 font-bold text-xs tracking-[0.15em]"
+            >
+              {MENU_ITEMS.map((item) => (
+                <div
+                  key={item.label}
+                  className="relative group h-full py-2"
+                  onMouseEnter={() => setHoveredMenu(item.label)}
                 >
-                  <div className="relative w-full group">
-                    <Search
-                      className="absolute left-0 top-1/2 -translate-y-1/2 text-trexx-red"
-                      size={18}
-                    />
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder="Buscar producto..."
-                      className="w-full bg-transparent border-b border-white/20 py-2 pl-8 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-trexx-red transition-all font-medium tracking-wide uppercase text-sm"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setIsSearchOpen(false)}
-                    className="text-white/50 hover:text-white transition-colors p-1"
+                  <Link
+                    to={item.path}
+                    className={`relative flex items-center gap-1 transition-colors ${
+                      isActive(item.path)
+                        ? "text-trexx-red"
+                        : "text-gray-300 hover:text-white"
+                    }`}
                   >
-                    <X size={24} />
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="nav-menu"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="hidden md:flex items-center gap-8 font-bold text-xs tracking-[0.15em]"
-                >
-                  {MENU_ITEMS.map((item) => (
-                    <div
-                      key={item.label}
-                      className="relative group h-full py-2"
-                      onMouseEnter={() => setHoveredMenu(item.label)}
-                    >
-                      <Link
-                        to={item.path}
-                        className={`relative flex items-center gap-1 transition-colors ${
-                          isActive(item.path)
-                            ? "text-trexx-red"
-                            : "text-gray-300 hover:text-white"
-                        }`}
-                      >
-                        {item.label}
-                        {item.submenu && (
-                          <ChevronDown
-                            size={12}
-                            className={`transition-transform duration-300 ${hoveredMenu === item.label ? "rotate-180 text-trexx-red" : ""}`}
-                          />
-                        )}
-                        {isActive(item.path) && (
-                          <motion.span
-                            layoutId="activeNav"
-                            className="absolute -bottom-1 left-0 w-full h-[2px] bg-trexx-red"
-                          />
-                        )}
-                      </Link>
+                    {item.label}
+                    {item.submenu && (
+                      <ChevronDown
+                        size={12}
+                        className={`transition-transform duration-300 ${hoveredMenu === item.label ? "rotate-180 text-trexx-red" : ""}`}
+                      />
+                    )}
+                    {isActive(item.path) && (
+                      <motion.span
+                        layoutId="activeNav"
+                        className="absolute -bottom-1 left-0 w-full h-[2px] bg-trexx-red"
+                      />
+                    )}
+                  </Link>
 
-                      {/* Dropdown */}
-                      <AnimatePresence>
-                        {item.submenu && hoveredMenu === item.label && (
-                          <motion.div
-                            initial={{
-                              opacity: 0,
-                              y: 10,
-                              clipPath: "inset(0% 0% 100% 0%)",
-                            }}
-                            animate={{
-                              opacity: 1,
-                              y: 0,
-                              clipPath: "inset(0% 0% -20% 0%)",
-                            }}
-                            exit={{
-                              opacity: 0,
-                              y: 5,
-                              clipPath: "inset(0% 0% 100% 0%)",
-                            }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute top-full left-0 mt-4 w-48 bg-[#0a0a0a] border border-white/10 shadow-2xl overflow-hidden"
-                          >
-                            <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-trexx-red"></div>
-                            <div className="flex flex-col py-2">
-                              {item.submenu.map((subItem) => (
-                                <Link
-                                  key={subItem.label}
-                                  to={subItem.path}
-                                  className={`px-6 py-3 transition-all text-[10px] tracking-[0.2em] font-bold block ${
-                                    isActive(subItem.path)
-                                      ? "text-white bg-white/10"
-                                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                                  }`}
-                                >
-                                  {subItem.label}
-                                </Link>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {/* Dropdown */}
+                  <AnimatePresence>
+                    {item.submenu && hoveredMenu === item.label && (
+                      <motion.div
+                        initial={{
+                          opacity: 0,
+                          y: 10,
+                          clipPath: "inset(0% 0% 100% 0%)",
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          clipPath: "inset(0% 0% -20% 0%)",
+                        }}
+                        exit={{
+                          opacity: 0,
+                          y: 5,
+                          clipPath: "inset(0% 0% 100% 0%)",
+                        }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full left-0 mt-4 w-48 bg-[#0a0a0a] border border-white/10 shadow-2xl overflow-hidden"
+                      >
+                        <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-trexx-red"></div>
+                        <div className="flex flex-col py-2">
+                          {item.submenu.map((subItem) => (
+                            <Link
+                              key={subItem.label}
+                              to={subItem.path}
+                              className={`px-6 py-3 transition-all text-[10px] tracking-[0.2em] font-bold block ${
+                                isActive(subItem.path)
+                                  ? "text-white bg-white/10"
+                                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                              }`}
+                            >
+                              {subItem.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </motion.div>
           </div>
 
-          {/* ICONOS */}
+          {/* ICONOS (DERECHA) */}
           <div className="flex items-center gap-5 text-white z-50 pl-4">
-            {!isSearchOpen && (
-              <motion.button
-                onClick={() => setIsSearchOpen(true)}
-                whileHover={{ scale: 1.1 }}
-                className="hover:text-trexx-red transition-colors hidden sm:block"
-              >
-                <Search size={20} strokeWidth={2} />
-              </motion.button>
-            )}
-
             {/* Login Trigger */}
             <motion.button
               onClick={() => setAuthModal("login")}
@@ -252,9 +201,9 @@ const Navbar = () => {
               <User size={20} strokeWidth={2} />
             </motion.button>
 
-            {/* BOTÓN CARRITO (CONECTADO) */}
+            {/* BOTÓN CARRITO */}
             <button
-              onClick={toggleCart} // Abre el Drawer
+              onClick={toggleCart}
               className="relative hover:text-trexx-red transition-colors group"
             >
               <ShoppingBag size={20} strokeWidth={2} />
@@ -272,6 +221,7 @@ const Navbar = () => {
               </AnimatePresence>
             </button>
 
+            {/* TOGGLE MENÚ MÓVIL */}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden text-white hover:text-trexx-red transition-colors ml-2"
@@ -280,7 +230,7 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* MENÚ MÓVIL */}
+          {/* MENÚ MÓVIL (OVERLAY) */}
           <AnimatePresence>
             {isOpen && (
               <motion.div
