@@ -24,6 +24,7 @@ import CartDrawer from "./components/cart/CartDrawer"; // Componente del Carrito
 // --- PAGES ---
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
+import NewReleaseHero from "./components/home/NewReleaseHero";
 
 // --- SCROLL TO TOP ---
 const ScrollToTop = () => {
@@ -83,6 +84,10 @@ function App() {
                 path="/"
                 element={
                   <>
+                    <div className="relative z-0">
+                      <NewReleaseHero />
+                    </div>
+
                     {/* 1. VIDEO HERO (Nuevo Principal) */}
                     <div className="relative z-0">
                       <VideoHero />

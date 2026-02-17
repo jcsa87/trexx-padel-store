@@ -96,6 +96,31 @@ export const PRODUCTS_DB = [
     description: "Ligereza y precisión para ellas.",
     features: ["Peso Reducido (350g)", "Goma Soft", "Diseño Exclusivo"],
   },
+  // --- NUEVO LANZAMIENTO ---
+  {
+    id: 109,
+    name: "TREXX SPREAD PRO 2026",
+    price: 365900,
+    category: "palas",
+    type: "hibrida", // Por ser lágrima y balance medio-alto
+    color: "red",
+    img: "/images/NewRelease/spread-pro-studio.png", // Usamos la imagen del Hero
+    description:
+      "Domina cada ángulo. Perfil de juego polivalente con Carbono Aluminizado 18K para máxima respuesta.",
+    features: [
+      "Carbono Aluminizado 18K",
+      "Forma Lágrima",
+      "Núcleo Pro Eva Soft",
+      "Superficie Rugosa",
+    ],
+    // Propiedades extra que podríamos usar en el detalle si quisieras expandirlo
+    gender: "unisex",
+    specs: {
+      balance: "Medio - Alto",
+      surface: "Caras rugosas texturizadas",
+      strap: "Europea",
+    },
+  },
 
   // --- ZAPATILLAS ---
   {
