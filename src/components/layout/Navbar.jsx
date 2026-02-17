@@ -1,18 +1,5 @@
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
-import {
-  ShoppingBag,
-  Menu,
-  X,
-  User,
-  Search,
-  ChevronDown,
-  Filter,
-} from "lucide-react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { ShoppingBag, Menu, X, User, Search, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import {
   motion,
@@ -21,19 +8,21 @@ import {
   AnimatePresence,
 } from "framer-motion";
 
+// IMPORTAMOS CONTEXTO DEL CARRITO
+import { useCart } from "../../context/CartContext";
+
 // IMPORTAMOS LOS MODALES
-// Asegúrate de que estos archivos existan en tu carpeta /auth
 import LoginModal from "../auth/LoginModal";
 import RegisterModal from "../auth/RegisterModal";
 import ForgotPasswordModal from "../auth/ForgotPasswordModal";
 
-// ESTRUCTURA DEL MENÚ: Usamos Query Params (?category=)
+// ESTRUCTURA DEL MENÚ
 const MENU_ITEMS = [
-  { label: "TODO", path: "/shop?category=all" }, // Opción para ver todo
+  { label: "TODO", path: "/shop?category=all" },
   { label: "PALAS", path: "/shop?category=palas" },
   {
     label: "INDUMENTARIA",
-    path: "/shop?category=ropa", // Categoría padre
+    path: "/shop?category=ropa",
     submenu: [
       { label: "HOMBRE", path: "/shop?category=ropaHombre" },
       { label: "MUJER", path: "/shop?category=ropaMujer" },
@@ -49,18 +38,24 @@ const Navbar = () => {
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const [isHidden, setIsHidden] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [authModal, setAuthModal] = useState(null);
 
-  // Hooks de Router
+  // Hooks del Carrito
+  const { cartCount, toggleCart } = useCart();
+
   const [searchParams] = useSearchParams();
   const currentCategory = searchParams.get("category");
   const location = useLocation();
-  const navigate = useNavigate();
 
   const searchInputRef = useRef(null);
   const { scrollY } = useScroll();
 
+  // CORRECCIÓN ESLINT: useEffect condicional
   useEffect(() => {
-    setIsOpen(false);
+    if (isOpen) {
+      setIsOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   useEffect(() => {
@@ -83,13 +78,11 @@ const Navbar = () => {
     hidden: { y: "-100%", opacity: 0 },
   };
 
-  // Función para determinar si un link está activo
   const isActive = (path) => {
     if (location.pathname !== "/shop") return false;
     const pathCategory = new URLSearchParams(path.split("?")[1]).get(
       "category",
     );
-    // Caso especial para ropa padre
     if (
       pathCategory === "ropa" &&
       (currentCategory === "ropaHombre" || currentCategory === "ropaMujer")
@@ -112,19 +105,15 @@ const Navbar = () => {
         onMouseLeave={() => setHoveredMenu(null)}
       >
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between px-6 relative">
-          {/* LOGO */}
-          <Link to="/" className="group flex items-center gap-1 z-50 mr-8">
-            <motion.div
-              whileHover={{ rotate: -5 }}
-              className="w-10 h-10 bg-trexx-red skew-x-[-10deg] flex items-center justify-center mr-2 shadow-[0_0_15px_rgba(220,38,38,0.5)]"
-            >
-              <span className="text-white font-black text-xl skew-x-[10deg] italic">
-                T
-              </span>
-            </motion.div>
-            <span className="self-center text-2xl font-black whitespace-nowrap tracking-tighter italic text-white hidden sm:block">
-              TREXX<span className="text-trexx-red">PADEL</span>
-            </span>
+          {/* --- LOGO (IMAGEN) --- */}
+          <Link to="/" className="group flex items-center z-50 mr-8">
+            <motion.img
+              src="/images/logo.png"
+              alt="TREXX PADEL"
+              className="h-8 md:h-10 w-auto object-contain"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            />
           </Link>
 
           {/* MENÚ DE FILTROS (DESKTOP) */}
@@ -186,7 +175,6 @@ const Navbar = () => {
                             className={`transition-transform duration-300 ${hoveredMenu === item.label ? "rotate-180 text-trexx-red" : ""}`}
                           />
                         )}
-                        {/* Línea indicadora activa */}
                         {isActive(item.path) && (
                           <motion.span
                             layoutId="activeNav"
@@ -254,17 +242,36 @@ const Navbar = () => {
                 <Search size={20} strokeWidth={2} />
               </motion.button>
             )}
-            <Link to="/carrito">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                className="relative hover:text-trexx-red transition-colors group"
-              >
-                <ShoppingBag size={20} strokeWidth={2} />
-                <span className="absolute -top-2 -right-2 bg-trexx-red text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-lg">
-                  2
-                </span>
-              </motion.button>
-            </Link>
+
+            {/* Login Trigger */}
+            <motion.button
+              onClick={() => setAuthModal("login")}
+              whileHover={{ scale: 1.1 }}
+              className="hover:text-trexx-red transition-colors hidden sm:block"
+            >
+              <User size={20} strokeWidth={2} />
+            </motion.button>
+
+            {/* BOTÓN CARRITO (CONECTADO) */}
+            <button
+              onClick={toggleCart} // Abre el Drawer
+              className="relative hover:text-trexx-red transition-colors group"
+            >
+              <ShoppingBag size={20} strokeWidth={2} />
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute -top-2 -right-2 bg-trexx-red text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-lg"
+                  >
+                    {cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden text-white hover:text-trexx-red transition-colors ml-2"
@@ -310,11 +317,50 @@ const Navbar = () => {
                     )}
                   </div>
                 ))}
+
+                {/* Botón Login Móvil */}
+                <div className="mt-auto pb-8 w-full">
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      setAuthModal("login");
+                    }}
+                    className="w-full py-4 border border-white/20 text-white font-bold tracking-widest uppercase hover:bg-white hover:text-black transition-colors flex items-center justify-center gap-3"
+                  >
+                    <User size={18} /> Iniciar Sesión
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </motion.nav>
+
+      {/* --- GESTIÓN DE MODALES --- */}
+      <AnimatePresence>
+        {authModal === "login" && (
+          <LoginModal
+            isOpen={true}
+            onClose={() => setAuthModal(null)}
+            onSwitchToRegister={() => setAuthModal("register")}
+            onSwitchToForgot={() => setAuthModal("forgot-password")}
+          />
+        )}
+        {authModal === "register" && (
+          <RegisterModal
+            isOpen={true}
+            onClose={() => setAuthModal(null)}
+            onSwitchToLogin={() => setAuthModal("login")}
+          />
+        )}
+        {authModal === "forgot-password" && (
+          <ForgotPasswordModal
+            isOpen={true}
+            onClose={() => setAuthModal(null)}
+            onSwitchToLogin={() => setAuthModal("login")}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };

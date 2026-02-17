@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,57 +13,64 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+// Contexto del carrito
+import { useCart } from "../context/CartContext";
+// Base de datos
 import { PRODUCTS_DB } from "../data/products";
 
-// --- VARIANTES DE ANIMACIÓN ---
-// Contenedor para orquestar la entrada secuencial (stagger)
-const contentContainerVariants = {
+// --- VARIANTES DE ANIMACIÓN (Sutiles) ---
+const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1, // Retraso entre cada elemento
+      staggerChildren: 0.1,
       delayChildren: 0.2,
     },
   },
 };
 
-// Animación de cada línea de texto: Sutil y Profesional
-const textItemVariants = {
-  hidden: { opacity: 0, y: 20 },
+const textVariants = {
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.8,
-      ease: [0.2, 0.65, 0.3, 0.9], // Curva suave (ease-out)
-    },
+    transition: { duration: 0.6, ease: "easeOut" },
   },
 };
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const { addToCart } = useCart();
 
+  // 1. BUSCAR PRODUCTO
   const product = useMemo(() => {
     return PRODUCTS_DB.find((p) => p.id === parseInt(id));
   }, [id]);
 
+  // --- ESTADOS ---
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState(null);
   const [zipCode, setZipCode] = useState("");
   const [shippingResult, setShippingResult] = useState(null);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [mainImage, setMainImage] = useState("");
 
-  useEffect(() => {
-    if (product) {
-      setMainImage(product.img);
-      setQuantity(1);
-      setSelectedSize(null);
-      setShippingResult(null);
-    }
-  }, [product]);
+  // Estado para la imagen principal y para controlar el reset
+  const [mainImage, setMainImage] = useState(product?.img || "");
+  const [prevId, setPrevId] = useState(id);
 
+  // --- PATRÓN: RESET DE ESTADO EN RENDER ---
+  // Esto reemplaza al useEffect problemático. Si el ID cambia, reseteamos todo al vuelo.
+  if (id !== prevId) {
+    setPrevId(id);
+    setMainImage(product?.img || "");
+    setQuantity(1);
+    setSelectedSize(null);
+    setShippingResult(null);
+    setZipCode("");
+  }
+
+  // --- MANEJO DE ERRORES ---
   if (!product) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-white">
@@ -80,6 +87,17 @@ const ProductDetail = () => {
       </div>
     );
   }
+
+  // --- HANDLERS ---
+  const handleAddToCart = () => {
+    const isApparel =
+      product.category === "ropa" || product.category === "zapatillas";
+    if (isApparel && !selectedSize) {
+      alert("Por favor selecciona un talle."); // Idealmente usar un toast
+      return;
+    }
+    addToCart(product, quantity, selectedSize);
+  };
 
   const calculateShipping = (e) => {
     e.preventDefault();
@@ -111,7 +129,7 @@ const ProductDetail = () => {
   ];
   const description =
     product.description ||
-    `El modelo ${product.name} está diseñado para ofrecer el máximo rendimiento en la pista. Fabricado con materiales de primera calidad para asegurar durabilidad y confort durante el juego.`;
+    `El modelo ${product.name} está diseñado para ofrecer el máximo rendimiento en la pista. Fabricado con materiales de primera calidad.`;
   const displayGender =
     product.gender && product.gender.toLowerCase() !== "unisex"
       ? ` / ${product.gender}`
@@ -119,7 +137,7 @@ const ProductDetail = () => {
 
   return (
     <div className="bg-[#050505] min-h-screen pt-32 pb-20 px-4 md:px-8 overflow-hidden">
-      {/* BREADCRUMBS (Entrada suave simple) */}
+      {/* BREADCRUMBS */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -140,30 +158,26 @@ const ProductDetail = () => {
       </motion.div>
 
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
-        {/* --- COLUMNA IZQUIERDA: IMAGEN (Estática y Limpia) --- */}
+        {/* --- COLUMNA IZQUIERDA: IMAGEN (Estática) --- */}
         <div className="relative">
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }} // Entrada muy sutil
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="relative aspect-[4/5] w-full bg-[#0a0a0a] border border-white/5 rounded-sm overflow-hidden flex items-center justify-center group"
           >
-            {/* Glow estático muy sutil */}
+            {/* Glow estático sutil */}
             <div
               className="absolute inset-0 opacity-10 blur-[100px]"
               style={{ backgroundColor: product.color || "#333" }}
             />
 
-            {/* IMAGEN SIN MOVIMIENTO PERPETUO */}
-            <div className="relative z-10 w-[90%] h-[90%] flex items-center justify-center">
-              <img
-                src={mainImage}
-                alt={product.name}
-                className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-105" // Solo zoom al hover
-              />
-            </div>
+            <img
+              src={mainImage}
+              alt={product.name}
+              className="relative z-10 w-[90%] h-[90%] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-105"
+            />
 
-            {/* Badge de Stock (Estático) */}
             <div className="absolute top-4 right-4 z-20">
               <div className="bg-[#111] text-white/80 text-[9px] font-bold px-3 py-1.5 uppercase tracking-widest border border-white/10 rounded-full flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
@@ -199,33 +213,30 @@ const ProductDetail = () => {
           </motion.div>
         </div>
 
-        {/* --- COLUMNA DERECHA: INFO (Animaciones Profesionales) --- */}
+        {/* --- COLUMNA DERECHA: INFO (Con Animaciones) --- */}
         <motion.div
           className="flex flex-col h-full"
-          variants={contentContainerVariants}
+          variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Categoría */}
           <motion.span
-            variants={textItemVariants}
+            variants={textVariants}
             className="text-trexx-red font-bold text-xs tracking-[0.2em] uppercase mb-3 block"
           >
             {product.category}
             {displayGender}
           </motion.span>
 
-          {/* Título */}
           <motion.h1
-            variants={textItemVariants}
+            variants={textVariants}
             className="text-4xl md:text-6xl font-black italic text-white tracking-tighter uppercase leading-[0.9] mb-6"
           >
             {product.name}
           </motion.h1>
 
-          {/* Precio */}
           <motion.div
-            variants={textItemVariants}
+            variants={textVariants}
             className="flex flex-wrap items-center gap-6 mb-8 border-b border-white/10 pb-8"
           >
             <span className="text-4xl font-mono text-white font-bold tracking-tighter">
@@ -241,17 +252,15 @@ const ProductDetail = () => {
             </div>
           </motion.div>
 
-          {/* Descripción */}
           <motion.p
-            variants={textItemVariants}
+            variants={textVariants}
             className="text-white/70 text-sm md:text-base leading-relaxed mb-8"
           >
             {description}
           </motion.p>
 
-          {/* SELECTOR DE TALLE */}
           {isApparel && (
-            <motion.div variants={textItemVariants} className="mb-8">
+            <motion.div variants={textVariants} className="mb-8">
               <div className="flex justify-between items-end mb-3">
                 <span className="text-xs font-bold text-white uppercase tracking-widest">
                   Seleccionar Talle
@@ -278,12 +287,10 @@ const ProductDetail = () => {
             </motion.div>
           )}
 
-          {/* ACCIONES DE COMPRA */}
           <motion.div
-            variants={textItemVariants}
+            variants={textVariants}
             className="flex flex-col sm:flex-row gap-4 mb-10"
           >
-            {/* Contador */}
             <div className="flex items-center border border-white/20 h-14 w-full sm:w-auto bg-[#0a0a0a]">
               <button
                 onClick={() => handleQuantity("minus")}
@@ -302,9 +309,9 @@ const ProductDetail = () => {
               </button>
             </div>
 
-            {/* Botón Añadir (Con interacción suave) */}
             <motion.button
-              whileHover={{ scale: 1.02, backgroundColor: "#b91c1c" }}
+              onClick={handleAddToCart}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="flex-1 bg-trexx-red h-14 flex items-center justify-center gap-3 text-white font-black italic uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(220,38,38,0.2)]"
             >
@@ -313,16 +320,14 @@ const ProductDetail = () => {
             </motion.button>
           </motion.div>
 
-          {/* CALCULADORA DE ENVÍO */}
           <motion.div
-            variants={textItemVariants}
+            variants={textVariants}
             className="bg-[#0f0f0f] border border-white/5 p-6 rounded-sm mb-8"
           >
             <h3 className="text-white font-bold uppercase text-xs tracking-widest mb-4 flex items-center gap-2">
               <Truck size={16} className="text-trexx-red" /> Calcular Costo de
               Envío
             </h3>
-
             <form onSubmit={calculateShipping} className="flex gap-2 mb-4">
               <input
                 type="number"
@@ -339,12 +344,11 @@ const ProductDetail = () => {
                 {isCalculating ? "..." : "Calcular"}
               </button>
             </form>
-
             <AnimatePresence>
               {shippingResult && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: "auto", y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
                   className="bg-white/5 p-4 rounded border border-white/10 overflow-hidden"
                 >
@@ -369,8 +373,7 @@ const ProductDetail = () => {
             </AnimatePresence>
           </motion.div>
 
-          {/* CARACTERÍSTICAS TÉCNICAS */}
-          <motion.div variants={textItemVariants} className="space-y-4">
+          <motion.div variants={textVariants} className="space-y-4">
             <div className="border border-white/10 p-5 bg-white/[0.02]">
               <h4 className="text-white font-bold uppercase text-xs tracking-widest mb-4 flex items-center gap-2">
                 <Star size={14} className="text-trexx-red" /> Especificaciones
@@ -387,8 +390,6 @@ const ProductDetail = () => {
                 ))}
               </ul>
             </div>
-
-            {/* Sellos de Confianza */}
             <div className="flex flex-wrap gap-6 text-[10px] text-white/40 uppercase tracking-wider font-bold pt-2">
               <div className="flex items-center gap-2 hover:text-white transition-colors cursor-help">
                 <ShieldCheck size={14} /> Garantía de fábrica

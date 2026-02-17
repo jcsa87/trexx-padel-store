@@ -6,6 +6,9 @@ import {
 } from "react-router-dom";
 import { useState, useEffect } from "react";
 
+// --- CONTEXTO DEL CARRITO ---
+import { CartProvider } from "./context/CartContext";
+
 // --- COMPONENTS ---
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
@@ -15,10 +18,12 @@ import InfiniteMarquee from "./components/ui/InfiniteMarquee";
 import FeaturedProducts from "./components/home/FeaturedProducts";
 import AboutUs from "./components/home/AboutUs";
 import Contact from "./components/home/Contact";
+import SectionDivider from "./components/ui/SectionDivider"; // Componente de Cinta
+import CartDrawer from "./components/cart/CartDrawer"; // Componente del Carrito
 
 // --- PAGES ---
 import Shop from "./pages/Shop";
-import ProductDetail from "./pages/ProductDetail"; // <--- IMPORTANTE: Importar el detalle
+import ProductDetail from "./pages/ProductDetail";
 
 // --- SCROLL TO TOP ---
 const ScrollToTop = () => {
@@ -60,89 +65,114 @@ function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   return (
-    <Router>
-      <ScrollToTop />
-      <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col">
-        {/* Navbar Fijo */}
-        <Navbar />
+    // 1. Envolvemos la app con el Provider del Carrito
+    <CartProvider>
+      <Router>
+        <ScrollToTop />
+        <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col">
+          {/* 2. Panel del Carrito Global */}
+          <CartDrawer />
 
-        <main className="flex-grow">
-          <Routes>
-            {/* --- HOME PAGE --- */}
-            <Route
-              path="/"
-              element={
-                <>
-                  {/* 1. VIDEO HERO (Nuevo Principal) */}
-                  <div className="relative z-0">
-                    <VideoHero />
-                  </div>
+          {/* Navbar Fijo */}
+          <Navbar />
 
-                  {/* 2. PRODUCT HERO (Antiguo Hero, ahora secundario) */}
-                  <div id="product-hero" className="relative z-10">
-                    <Hero current={currentSlide} setCurrent={setCurrentSlide} />
-                  </div>
+          <main className="flex-grow">
+            <Routes>
+              {/* --- HOME PAGE --- */}
+              <Route
+                path="/"
+                element={
+                  <>
+                    {/* 1. VIDEO HERO (Nuevo Principal) */}
+                    <div className="relative z-0">
+                      <VideoHero />
+                    </div>
 
-                  {/* 3. MARQUEE */}
-                  <div className="relative z-20">
-                    <InfiniteMarquee />
-                  </div>
+                    {/* 3. MARQUEE */}
+                    <div className="relative z-20">
+                      <InfiniteMarquee />
+                    </div>
 
-                  <div className="relative z-10 bg-[#050505]">
-                    {/* Productos Destacados */}
-                    <FeaturedProducts />
+                    <div className="relative z-10 bg-[#050505]">
+                      {/* Productos Destacados */}
+                      <FeaturedProducts />
 
-                    {/* Historia (ADN Argentino) */}
-                    <AboutUs />
+                      {/* --- CINTA SUPERIOR (NUEVA) --- */}
+                      {/* Transición hacia el slider de productos */}
+                      <SectionDivider
+                        text1="High Performance"
+                        text2="Carbon Innovation"
+                        text3="Next Gen Padel"
+                        reverse={true}
+                      />
 
-                    {/* Contacto */}
+                      {/* 2. PRODUCT HERO (Antiguo Hero, ahora secundario) */}
+                      <div id="product-hero" className="relative z-10">
+                        <Hero
+                          current={currentSlide}
+                          setCurrent={setCurrentSlide}
+                        />
+                      </div>
+
+                      {/* --- CINTA INFERIOR (EXISTENTE) --- */}
+                      {/* Transición hacia la historia */}
+                      <SectionDivider
+                        text1="Argentine DNA"
+                        text2="Professional Grade"
+                        text3="Break The Limits"
+                      />
+
+                      {/* Historia (ADN Argentino) */}
+                      <AboutUs />
+
+                      {/* Contacto */}
+                      <Contact />
+                    </div>
+                  </>
+                }
+              />
+
+              {/* --- SHOP ROUTES --- */}
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/palas" element={<Shop />} />
+              <Route path="/ropa" element={<Shop />} />
+              <Route path="/zapatillas" element={<Shop />} />
+              <Route path="/accesorios" element={<Shop />} />
+
+              {/* --- PRODUCT DETAIL --- */}
+              <Route path="/shop/product/:id" element={<ProductDetail />} />
+
+              {/* --- PÁGINAS ESTÁTICAS / PLACEHOLDERS --- */}
+              <Route
+                path="/historia"
+                element={<PagePlaceholder title="NUESTRA HISTORIA" />}
+              />
+              <Route
+                path="/tecnologia"
+                element={<PagePlaceholder title="TECNOLOGÍA" />}
+              />
+              <Route
+                path="/jugadores"
+                element={<PagePlaceholder title="TEAM TREXX" />}
+              />
+
+              <Route
+                path="/contacto"
+                element={
+                  <div className="pt-20">
                     <Contact />
                   </div>
-                </>
-              }
-            />
+                }
+              />
 
-            {/* --- SHOP ROUTES --- */}
-            <Route path="/shop" element={<Shop />} />
-            {/* Rutas directas para SEO/Navegación que renderizan el Shop */}
-            <Route path="/palas" element={<Shop />} />
-            <Route path="/ropa" element={<Shop />} />
-            <Route path="/zapatillas" element={<Shop />} />
-            <Route path="/accesorios" element={<Shop />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
 
-            {/* --- PRODUCT DETAIL --- */}
-            <Route path="/shop/product/:id" element={<ProductDetail />} />
-
-            {/* --- PÁGINAS ESTÁTICAS / PLACEHOLDERS --- */}
-            <Route
-              path="/historia"
-              element={<PagePlaceholder title="NUESTRA HISTORIA" />}
-            />
-            <Route
-              path="/tecnologia"
-              element={<PagePlaceholder title="TECNOLOGÍA" />}
-            />
-            <Route
-              path="/jugadores"
-              element={<PagePlaceholder title="TEAM TREXX" />}
-            />
-
-            <Route
-              path="/contacto"
-              element={
-                <div className="pt-20">
-                  <Contact />
-                </div>
-              }
-            />
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-
-        <Footer />
-      </div>
-    </Router>
+          <Footer />
+        </div>
+      </Router>
+    </CartProvider>
   );
 }
 

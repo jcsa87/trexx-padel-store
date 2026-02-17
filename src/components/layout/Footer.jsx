@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 const Footer = () => {
   return (
     <footer className="bg-black border-t border-white/10 py-12 relative overflow-hidden">
-      {/* Fondo decorativo (Logo gigante recortado) */}
+      {/* Fondo decorativo */}
       <div className="absolute -top-10 -right-10 text-[150px] font-black text-white/5 select-none pointer-events-none italic leading-none">
         TREXX
       </div>
@@ -15,10 +15,13 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-10">
           {/* IZQUIERDA: Marca + Redes */}
           <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+            {/* LOGO IMAGEN */}
             <Link to="/" className="inline-block">
-              <span className="text-3xl font-black italic tracking-tighter text-white">
-                TREXX<span className="text-trexx-red">PADEL</span>
-              </span>
+              <img
+                src="/images/logo.png"
+                alt="TREXX PADEL"
+                className="h-8 md:h-12 w-auto object-contain hover:brightness-125 transition-all duration-300"
+              />
             </Link>
 
             {/* Redes Sociales */}
@@ -42,7 +45,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* DERECHA: Navegación Institucional (Sin productos) */}
+          {/* DERECHA: Navegación Institucional */}
           <nav>
             <ul className="flex flex-wrap justify-center gap-6 md:gap-8 text-xs md:text-sm font-bold tracking-widest uppercase text-gray-500">
               {["Historia", "Tecnología", "Jugadores", "Contacto"].map(
@@ -52,7 +55,7 @@ const Footer = () => {
                       to={`/${item
                         .toLowerCase()
                         .normalize("NFD")
-                        .replace(/[\u0300-\u036f]/g, "")}`} // Limpia acentos para la URL
+                        .replace(/[\u0300-\u036f]/g, "")}`}
                       className="hover:text-white transition-colors duration-300 relative group"
                     >
                       {item}
@@ -85,7 +88,6 @@ const Footer = () => {
             </span>
 
             <div className="relative px-2 py-1 bg-white/5 rounded-sm overflow-hidden group-hover:bg-white/10 transition-colors duration-300">
-              {/* Gradiente de fondo Versori */}
               <motion.div
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{

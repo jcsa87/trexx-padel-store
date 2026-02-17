@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from "react";
+import { Link } from "react-router-dom"; // Importamos Link
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -10,10 +11,10 @@ import {
   Crown,
 } from "lucide-react";
 
-// --- DATOS ---
+// --- DATOS (IDs actualizados para coincidir con la DB) ---
 const SLIDES = [
   {
-    id: 1,
+    id: 102, // ID real de la TREXX DRAGON en tu DB
     brand: "TREXX",
     model: "DRAGON",
     tagline: "POTENCIA DE FUEGO",
@@ -29,7 +30,7 @@ const SLIDES = [
     color: "#dc2626",
   },
   {
-    id: 2,
+    id: 103, // ID real de la GOLD PRO en tu DB
     brand: "TREXX",
     model: "GOLD PRO MAX",
     tagline: "EL TOQUE MIDAS",
@@ -58,12 +59,8 @@ const Hero = ({ current, setCurrent }) => {
     setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
   };
 
-  // --- LÓGICA DE AUTO-AVANCE ---
-  // Lógica de auto-avance para imágenes
+  // Lógica de auto-avance
   useEffect(() => {
-    // ELIMINADO: setVideoProgress(0) aquí causaba el error de linter.
-    // El progreso se reseteará naturalmente al desmontarse el componente de video gracias al 'key'.
-
     let timer;
     const currentSlide = SLIDES[current];
 
@@ -84,11 +81,8 @@ const Hero = ({ current, setCurrent }) => {
   };
 
   return (
-    // CAMBIO IMPORTANTE:
-    // py-32 (móvil) y lg:py-48 (escritorio).
-    // Esto empuja el contenido hacia adentro, alejándolo de la franja negra superior y del borde inferior.
     <section className="relative min-h-[90vh] w-full overflow-hidden bg-[#050505] flex items-center py-32 lg:py-48">
-      {/* --- CAPA 1: TRANSICIÓN NEGRA (FRANJA) --- */}
+      {/* --- CAPA 1: TRANSICIÓN NEGRA --- */}
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#050505] via-[#050505]/80 to-transparent z-20 pointer-events-none"></div>
 
       {/* --- CAPA 0: FONDO --- */}
@@ -114,7 +108,6 @@ const Hero = ({ current, setCurrent }) => {
       </div>
 
       {/* --- CAPA 3: CONTENIDO --- */}
-      {/* z-30 para estar encima de la franja negra */}
       <div className="max-w-7xl mx-auto px-6 w-full h-full relative z-30">
         <AnimatePresence mode="wait">
           <div
@@ -211,11 +204,14 @@ const Hero = ({ current, setCurrent }) => {
                 transition={{ delay: 0.8 }}
                 className="flex items-center gap-8"
               >
-                <button className="group relative px-8 py-4 bg-white text-black font-bold tracking-widest uppercase overflow-hidden hover:bg-gray-200 transition-colors">
-                  <span className="relative flex items-center justify-center gap-3">
-                    Comprar <ArrowRight size={18} />
-                  </span>
-                </button>
+                {/* --- BOTÓN COMPRAR LINKEADO --- */}
+                <Link to={`/shop/product/${SLIDES[current].id}`}>
+                  <button className="group relative px-8 py-4 bg-white text-black font-bold tracking-widest uppercase overflow-hidden hover:bg-gray-200 transition-colors">
+                    <span className="relative flex items-center justify-center gap-3">
+                      Comprar <ArrowRight size={18} />
+                    </span>
+                  </button>
+                </Link>
 
                 <div className="flex gap-4">
                   <button
@@ -269,7 +265,7 @@ const Hero = ({ current, setCurrent }) => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
 
                 <div className="absolute top-6 left-6 text-white/10 font-mono text-xl tracking-widest select-none border border-white/10 px-2 py-1">
-                  0{SLIDES[current].id}
+                  0{current + 1}
                 </div>
               </motion.div>
 
