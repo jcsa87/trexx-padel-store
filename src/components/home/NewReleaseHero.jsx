@@ -12,7 +12,7 @@ import {
 
 // DATOS DEL PRODUCTO
 const LAUNCH_PRODUCT = {
-  id: 105,
+  id: 109,
   name: "SPREAD PRO",
   year: "2026",
   price: 365900,
@@ -53,31 +53,28 @@ const staggerContainerVariant = {
   },
 };
 
-// --- GENERADOR DE PARTÍCULAS (MEJORADO) ---
+// --- GENERADOR DE PARTÍCULAS OPTIMIZADO ---
 const Particle = () => {
   const [values] = useState(() => ({
-    x: Math.random() * 100, // Posición X (0-100%)
-    yStart: Math.random() * 100 + 10, // Empiezan desde abajo (10% a 110%)
-    delay: Math.random() * 20, // Retraso largo para que no salgan todas juntas
-    duration: Math.random() * 15 + 10, // Duración lenta (10-25s)
-    size: Math.random() * 4 + 1, // Tamaño variado (1-5px)
-    opacity: Math.random() * 0.5 + 0.1, // Opacidad variada
+    x: Math.random() * 100,
+    delay: Math.random() * 20,
+    duration: Math.random() * 10 + 15,
+    size: Math.random() * 4 + 1,
   }));
 
   return (
     <motion.div
-      className="absolute rounded-full bg-white mix-blend-screen pointer-events-none"
+      className="absolute rounded-full bg-white/20 mix-blend-screen pointer-events-none"
       style={{
         left: `${values.x}%`,
+        bottom: "-10%",
         width: values.size,
         height: values.size,
-        opacity: values.opacity,
-        boxShadow: `0 0 ${values.size * 2}px rgba(255, 255, 255, 0.8)`, // Glow en cada partícula
+        willChange: "transform, opacity",
       }}
-      initial={{ y: `${values.yStart}vh`, opacity: 0 }}
       animate={{
-        y: "-10vh", // Suben hasta salir por arriba
-        opacity: [0, values.opacity, 0], // Aparecen y desaparecen
+        y: ["0vh", "-100vh"],
+        opacity: [0, 0.4, 0],
       }}
       transition={{
         duration: values.duration,
@@ -92,81 +89,59 @@ const Particle = () => {
 const NewReleaseHero = () => {
   return (
     <section className="relative min-h-screen w-full bg-[#050505] overflow-hidden pt-32 pb-20 lg:pt-40 flex flex-col justify-center">
-      {/* --- FONDO AMBIENTAL AVANZADO --- */}
+      {/* --- FONDO AMBIENTAL --- */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* 1. Capa de Ruido base */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 mix-blend-overlay"></div>
+        {/* Ruido y Viñeta (Estáticos, muy ligeros) */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#050505_100%)] opacity-90"></div>
 
-        {/* 2. Vignette Dramática */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,#050505_90%)] opacity-80"></div>
-
-        {/* 3. FX: Luces Ambientales */}
+        {/* Luces Ambientales (Loops infinitos suaves, no dependen de scroll) */}
         <motion.div
+          style={{ willChange: "transform, opacity" }}
           animate={{
-            x: [-50, 50, -50],
+            scale: [1, 1.1, 1],
             opacity: [0.3, 0.5, 0.3],
           }}
           transition={{
-            duration: 15,
+            duration: 10,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute bottom-[-20%] left-[-20%] w-[150%] h-[600px] bg-gradient-to-t from-red-900/50 via-trexx-red/20 to-transparent blur-[150px] mix-blend-screen"
-        />
-        <motion.div
-          animate={{
-            x: [50, -50, 50],
-            opacity: [0.1, 0.3, 0.1],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-          className="absolute top-[-20%] right-[-20%] w-[150%] h-[600px] bg-gradient-to-b from-gray-800/40 via-gray-900/20 to-transparent blur-[150px] mix-blend-screen"
+          className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[500px] bg-red-900/30 blur-[120px] rounded-full mix-blend-screen"
         />
 
-        {/* 4. FX: Destello Central Pulsante */}
         <motion.div
+          style={{ willChange: "transform, opacity" }}
           initial={{ scale: 0.8, opacity: 0.2 }}
           animate={{
-            scale: [1, 1.15, 1],
-            opacity: [0.4, 0.7, 0.4],
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3],
           }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-trexx-red/30 blur-[180px] rounded-full mix-blend-screen"
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-trexx-red/20 blur-[150px] rounded-full mix-blend-screen"
         />
 
-        {/* 5. FX: MUCHAS PARTÍCULAS (AUMENTADO A 60) */}
-        {[...Array(60)].map((_, i) => (
+        {/* Partículas (25 es un buen balance) */}
+        {[...Array(25)].map((_, i) => (
           <Particle key={i} />
         ))}
       </div>
 
       <div className="container max-w-7xl mx-auto px-6 relative z-10">
-        {/* --- GRID LAYOUT --- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* 1. COLUMNA IZQUIERDA: TEXTO Y CTA */}
+          {/* 1. COLUMNA IZQUIERDA */}
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, amount: 0.3 }}
+            viewport={{ once: true, amount: 0.3 }} // <--- OPTIMIZACIÓN: once: true
             className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left order-2 lg:order-1"
           >
-            {/* Badge Nuevo Lanzamiento */}
+            {/* Badge */}
             <motion.div
               variants={fadeInUpVariant}
               custom={0.1}
-              className="inline-flex items-center gap-2 px-3 py-1 border border-trexx-red/50 bg-trexx-red/10 rounded-full mb-6 relative overflow-hidden group"
+              className="inline-flex items-center gap-2 px-3 py-1 border border-trexx-red/50 bg-trexx-red/10 rounded-full mb-6 relative overflow-hidden"
             >
-              <motion.div
-                initial={{ x: "-100%" }}
-                whileInView={{ x: "200%" }}
-                viewport={{ once: false }}
-                transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12"
-              />
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-trexx-red opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-trexx-red"></span>
@@ -176,13 +151,13 @@ const NewReleaseHero = () => {
               </span>
             </motion.div>
 
-            {/* Título Principal */}
+            {/* Título */}
             <motion.div variants={fadeInUpVariant} custom={0.2}>
               <h1 className="text-5xl md:text-7xl font-black italic text-white tracking-tighter uppercase leading-[0.9] mb-4 overflow-hidden relative pr-4">
                 <motion.span
                   initial={{ y: "100%" }}
                   whileInView={{ y: 0 }}
-                  viewport={{ once: false }}
+                  viewport={{ once: true }} // <--- OPTIMIZACIÓN
                   transition={{ duration: 0.8, ease: "circOut", delay: 0.2 }}
                   className="block"
                 >
@@ -193,7 +168,7 @@ const NewReleaseHero = () => {
                 <motion.span
                   initial={{ y: "100%" }}
                   whileInView={{ y: 0 }}
-                  viewport={{ once: false }}
+                  viewport={{ once: true }} // <--- OPTIMIZACIÓN
                   transition={{ duration: 0.8, ease: "circOut", delay: 0.3 }}
                   className="block text-transparent bg-clip-text bg-gradient-to-r from-trexx-red to-red-800"
                 >
@@ -223,7 +198,10 @@ const NewReleaseHero = () => {
                 </span>
               </div>
 
-              <Link to={`/shop/product/109`} className="w-full sm:w-auto">
+              <Link
+                to={`/shop/product/${LAUNCH_PRODUCT.id}`}
+                className="w-full sm:w-auto"
+              >
                 <button className="group relative w-full sm:w-auto px-8 py-4 bg-white text-black font-black tracking-widest uppercase overflow-hidden transition-transform duration-300 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_50px_rgba(220,38,38,0.4)]">
                   <span className="relative flex items-center justify-center gap-3 z-10 transition-colors group-hover:text-trexx-red">
                     Comprar Ahora <ArrowRight size={18} />
@@ -257,7 +235,7 @@ const NewReleaseHero = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: [0, 1, 0] }}
-                viewport={{ once: false }}
+                viewport={{ once: true }} // <--- OPTIMIZACIÓN
                 transition={{ duration: 2, delay: 1 }}
                 className="absolute inset-0 bg-gradient-to-r from-trexx-red/0 via-trexx-red/10 to-trexx-red/0"
               />
@@ -268,29 +246,31 @@ const NewReleaseHero = () => {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, amount: 0.3 }}
+            viewport={{ once: true, amount: 0.3 }} // <--- OPTIMIZACIÓN
             className="lg:col-span-4 order-1 lg:order-2 relative h-[500px] lg:h-[700px] flex items-center justify-center z-20"
           >
             {/* Anillos giratorios */}
             <motion.div
+              style={{ willChange: "transform" }}
               initial={{ scale: 0, opacity: 0, rotate: 0 }}
               whileInView={{ scale: 1, opacity: 0.8, rotate: 360 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }} // <--- OPTIMIZACIÓN
               transition={{
                 scale: { duration: 1.5, ease: "circOut" },
                 opacity: { duration: 1 },
-                rotate: { duration: 30, repeat: Infinity, ease: "linear" },
+                rotate: { duration: 60, repeat: Infinity, ease: "linear" }, // Rotación lenta infinita
               }}
               className="absolute w-[400px] h-[400px] lg:w-[550px] lg:h-[550px] border border-white/5 rounded-full"
             ></motion.div>
             <motion.div
+              style={{ willChange: "transform" }}
               initial={{ scale: 0, opacity: 0, rotate: 0 }}
               whileInView={{ scale: 1, opacity: 0.6, rotate: -360 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }} // <--- OPTIMIZACIÓN
               transition={{
                 scale: { duration: 1.5, ease: "circOut", delay: 0.2 },
                 opacity: { duration: 1 },
-                rotate: { duration: 35, repeat: Infinity, ease: "linear" },
+                rotate: { duration: 70, repeat: Infinity, ease: "linear" },
               }}
               className="absolute w-[350px] h-[350px] lg:w-[500px] lg:h-[500px] border border-trexx-red/10 rounded-full border-dashed"
             ></motion.div>
@@ -299,7 +279,7 @@ const NewReleaseHero = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: 60, rotateX: 10 }}
               whileInView={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }} // <--- OPTIMIZACIÓN: La entrada es una vez
               transition={{ duration: 1.4, ease: "circOut", delay: 0.2 }}
               className="relative z-20 w-auto h-[90%]"
             >
@@ -307,13 +287,13 @@ const NewReleaseHero = () => {
                 src={LAUNCH_PRODUCT.images.main}
                 alt="TREXX SPREAD PRO 2026"
                 className="w-full h-full object-contain drop-shadow-[0_35px_80px_rgba(220,38,38,0.5)]"
+                style={{ willChange: "transform" }}
                 animate={{
-                  y: [0, -30, 0],
-                  rotate: [0, 2, 0],
-                  rotateY: [0, 3, 0],
+                  y: [0, -20, 0], // Movimiento de flotación (loop)
+                  rotate: [0, 1, 0],
                 }}
                 transition={{
-                  duration: 7,
+                  duration: 8, // Lento y suave
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
@@ -321,13 +301,13 @@ const NewReleaseHero = () => {
             </motion.div>
           </motion.div>
 
-          {/* 3. COLUMNA DERECHA: SPECS TÉCNICAS */}
+          {/* 3. COLUMNA DERECHA: SPECS */}
           <div className="lg:col-span-3 order-3 flex flex-col gap-4 relative z-30">
-            {/* TARJETA MATERIAL PRINCIPAL */}
+            {/* TARJETA MATERIAL */}
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }} // <--- OPTIMIZACIÓN
               transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               className="group relative h-36 w-full rounded-xl overflow-hidden border border-white/10 hover:border-trexx-red/50 transition-colors cursor-default shadow-2xl"
             >
@@ -335,23 +315,13 @@ const NewReleaseHero = () => {
                 <img
                   src={LAUNCH_PRODUCT.images.texture}
                   alt="Carbon 18K"
-                  className="w-full h-full object-cover opacity-50 group-hover:scale-110 group-hover:opacity-70 transition-all duration-700"
+                  className="w-full h-full object-cover opacity-50 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/60 to-transparent"></div>
               </div>
 
               <div className="relative z-10 p-6 h-full flex flex-col justify-center">
-                <motion.div
-                  initial={{ scale: 1 }}
-                  whileInView={{ scale: [1, 1.2, 1] }}
-                  viewport={{ once: false }}
-                  transition={{ duration: 0.5, delay: 0.8 }}
-                >
-                  <ShieldCheck
-                    className="text-trexx-red mb-3 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]"
-                    size={28}
-                  />
-                </motion.div>
+                <ShieldCheck className="text-trexx-red mb-3" size={28} />
                 <h3 className="text-white font-black text-xl leading-none uppercase italic tracking-tight">
                   CARBONO 18K
                 </h3>
@@ -359,15 +329,14 @@ const NewReleaseHero = () => {
                   Aluminizado para máxima potencia.
                 </p>
               </div>
-              <div className="absolute inset-0 border-2 border-trexx-red/0 group-hover:border-trexx-red/30 rounded-xl transition-all duration-500 pointer-events-none"></div>
             </motion.div>
 
-            {/* LISTA DE SPECS ESTILO HUD */}
+            {/* LISTA SPECS */}
             <motion.div
               variants={staggerContainerVariant}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: false, amount: 0.1 }}
+              viewport={{ once: true, amount: 0.1 }} // <--- OPTIMIZACIÓN
               className="space-y-3"
             >
               <SpecItem
@@ -398,7 +367,7 @@ const NewReleaseHero = () => {
   );
 };
 
-// Subcomponente para items de especificaciones
+// Subcomponente simple para Specs
 const SpecItem = ({ label, value, icon }) => (
   <motion.div
     variants={{
@@ -409,12 +378,10 @@ const SpecItem = ({ label, value, icon }) => (
         transition: { type: "spring", stiffness: 100, damping: 15 },
       },
     }}
-    className="flex items-center justify-between bg-white/[0.03] border border-white/10 p-4 rounded-lg hover:bg-white/[0.08] transition-all group relative overflow-hidden"
+    className="flex items-center justify-between bg-white/[0.03] border border-white/10 p-4 rounded-lg hover:bg-white/[0.08] transition-all group"
   >
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out"></div>
-
     <div className="flex items-center gap-4 relative z-10">
-      <div className="text-white/40 group-hover:text-trexx-red transition-colors group-hover:drop-shadow-[0_0_5px_rgba(220,38,38,0.8)]">
+      <div className="text-white/40 group-hover:text-trexx-red transition-colors">
         {icon}
       </div>
       <span className="text-white/50 text-[10px] uppercase tracking-[0.2em] font-bold">
