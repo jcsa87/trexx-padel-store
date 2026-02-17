@@ -1,24 +1,23 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Mail, Phone, Send, MessageSquare } from "lucide-react";
 
 const Contact = () => {
-  const [focusedField, setFocusedField] = useState(null);
-
   return (
     <section className="relative py-32 px-6 bg-[#050505] overflow-hidden">
-      {/* --- FONDO ATMOSFÉRICO DE LUJO --- */}
+      {/* --- FONDO ATMOSFÉRICO OPTIMIZADO --- */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* 1. Grid Animado (Efecto Tech) */}
+        {/* 1. Grid Estático (CSS puro es más rápido) */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
 
-        {/* 2. Luces Ambientales */}
+        {/* 2. Luces Ambientales (GPU Accelerated) */}
         <motion.div
+          style={{ willChange: "transform, opacity" }}
           animate={{ x: [0, 50, 0], opacity: [0.1, 0.2, 0.1] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-0 right-0 w-[600px] h-[600px] bg-trexx-red rounded-full blur-[180px] opacity-10"
         />
         <motion.div
+          style={{ willChange: "transform, opacity" }}
           animate={{ x: [0, -30, 0], opacity: [0.05, 0.1, 0.05] }}
           transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
           className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#06b6d4] rounded-full blur-[150px] opacity-10"
@@ -32,7 +31,7 @@ const Contact = () => {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.3 }}
+              viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <span className="text-trexx-red font-bold tracking-[0.3em] text-xs uppercase mb-4 flex items-center gap-2">
@@ -79,12 +78,12 @@ const Contact = () => {
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, amount: 0.3 }}
+            viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="relative"
           >
             {/* Glow trasero */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-trexx-red/20 via-transparent to-blue-500/20 rounded-lg blur-xl opacity-50"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-trexx-red/20 via-transparent to-blue-500/20 rounded-lg blur-xl opacity-50 pointer-events-none"></div>
 
             <div className="relative bg-[#0a0a0a] border border-white/10 p-8 md:p-12 rounded-sm shadow-2xl backdrop-blur-sm">
               <h3 className="text-2xl font-bold text-white mb-8 tracking-wide flex items-center gap-3">
@@ -92,32 +91,26 @@ const Contact = () => {
                 MENSAJE
               </h3>
 
-              {/* autoComplete="off" previene íconos molestos del navegador */}
               <form
                 className="space-y-8"
                 onSubmit={(e) => e.preventDefault()}
                 autoComplete="off"
               >
-                {/* Input: Nombre */}
+                {/* Input: Nombre (Optimizado con CSS Peer) */}
                 <div className="relative group">
                   <input
                     type="text"
                     id="user_name_trexx"
                     name="user_name_trexx"
                     placeholder=" "
-                    className="block py-4 px-0 w-full text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-trexx-red peer transition-colors duration-300"
-                    onFocus={() => setFocusedField("name")}
-                    onBlur={() => setFocusedField(null)}
+                    className="block py-4 px-0 w-full text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-transparent peer transition-colors duration-300"
                     autoComplete="off"
                   />
                   <label className="absolute text-sm text-white/40 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-trexx-red font-bold tracking-widest uppercase pointer-events-none">
                     Nombre Completo
                   </label>
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={{ width: focusedField === "name" ? "100%" : "0%" }}
-                    className="absolute bottom-0 left-0 h-[2px] bg-trexx-red"
-                  />
+                  {/* Línea animada con CSS en lugar de JS */}
+                  <div className="absolute bottom-0 left-0 h-[2px] bg-trexx-red w-0 transition-all duration-300 peer-focus:w-full" />
                 </div>
 
                 {/* Input: Email */}
@@ -127,21 +120,13 @@ const Contact = () => {
                     id="user_email_trexx"
                     name="user_email_trexx"
                     placeholder=" "
-                    className="block py-4 px-0 w-full text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-trexx-red peer transition-colors duration-300"
-                    onFocus={() => setFocusedField("email")}
-                    onBlur={() => setFocusedField(null)}
+                    className="block py-4 px-0 w-full text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-transparent peer transition-colors duration-300"
                     autoComplete="off"
                   />
                   <label className="absolute text-sm text-white/40 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-trexx-red font-bold tracking-widest uppercase pointer-events-none">
                     Email
                   </label>
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={{
-                      width: focusedField === "email" ? "100%" : "0%",
-                    }}
-                    className="absolute bottom-0 left-0 h-[2px] bg-trexx-red"
-                  />
+                  <div className="absolute bottom-0 left-0 h-[2px] bg-trexx-red w-0 transition-all duration-300 peer-focus:w-full" />
                 </div>
 
                 {/* Input: Mensaje */}
@@ -150,20 +135,12 @@ const Contact = () => {
                     id="user_message"
                     rows="3"
                     placeholder=" "
-                    className="block py-4 px-0 w-full text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-trexx-red peer transition-colors duration-300 resize-none"
-                    onFocus={() => setFocusedField("message")}
-                    onBlur={() => setFocusedField(null)}
+                    className="block py-4 px-0 w-full text-white bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-transparent peer transition-colors duration-300 resize-none"
                   />
                   <label className="absolute text-sm text-white/40 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-trexx-red font-bold tracking-widest uppercase pointer-events-none">
                     Mensaje
                   </label>
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={{
-                      width: focusedField === "message" ? "100%" : "0%",
-                    }}
-                    className="absolute bottom-0 left-0 h-[2px] bg-trexx-red"
-                  />
+                  <div className="absolute bottom-0 left-0 h-[2px] bg-trexx-red w-0 transition-all duration-300 peer-focus:w-full" />
                 </div>
 
                 {/* Botón */}
@@ -192,7 +169,7 @@ const ContactInfoCard = ({ icon, title, detail, delay }) => {
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: false }}
+      viewport={{ once: true }} // OPTIMIZADO
       transition={{ duration: 0.6, delay: delay }}
       whileHover={{ x: 10, backgroundColor: "rgba(255,255,255,0.03)" }}
       className="flex items-center gap-6 p-4 border border-transparent hover:border-white/10 rounded-sm transition-all cursor-default group"

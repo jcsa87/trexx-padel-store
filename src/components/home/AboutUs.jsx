@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Hammer, Factory, Plane, Award, Quote } from "lucide-react";
+import { Factory, Plane, Award, Quote } from "lucide-react";
 
 // --- DATOS HISTORIA ---
 const HISTORY_STEPS = [
@@ -26,11 +26,11 @@ const HISTORY_STEPS = [
 
 // --- VARIANTES DE ANIMACIÓN ---
 const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 30 }, // Reducido de 40 a 30 para ser más sutil
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, ease: "easeOut" },
+    transition: { duration: 0.6, ease: "easeOut" },
   },
 };
 
@@ -39,14 +39,14 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2,
+      staggerChildren: 0.15,
       delayChildren: 0.1,
     },
   },
 };
 
 const imageReveal = {
-  hidden: { opacity: 0, scale: 0.95 },
+  hidden: { opacity: 0, scale: 0.98 },
   visible: {
     opacity: 1,
     scale: 1,
@@ -61,19 +61,19 @@ const AboutUs = () => {
     offset: ["start end", "end start"],
   });
 
-  const yParallax = useTransform(scrollYProgress, [0, 1], [50, -50]);
+  const yParallax = useTransform(scrollYProgress, [0, 1], [30, -30]); // Reducido rango parallax
 
   return (
     <section
       ref={containerRef}
       className="relative py-24 md:py-32 bg-[#050505] overflow-hidden"
     >
-      {/* --- FONDO ATMOSFÉRICO --- */}
+      {/* --- FONDO ATMOSFÉRICO (OPTIMIZADO) --- */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
         <motion.div
-          style={{ y: yParallax }}
-          animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.15, 0.1] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          style={{ y: yParallax, willChange: "transform" }} // OPTIMIZACIÓN
+          animate={{ scale: [1, 1.05, 1], opacity: [0.1, 0.12, 0.1] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }} // Más lento y linear
           className="absolute top-0 right-0 w-[500px] md:w-[800px] h-[500px] md:h-[800px] bg-[#75AADB]/10 rounded-full blur-[100px] md:blur-[120px]"
         />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
@@ -86,7 +86,7 @@ const AboutUs = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }} // OPTIMIZACIÓN
             transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 mb-4"
           >
@@ -99,7 +99,7 @@ const AboutUs = () => {
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }} // OPTIMIZACIÓN
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="text-3xl md:text-6xl font-black italic tracking-tighter text-white uppercase leading-tight md:leading-[0.9]"
           >
@@ -117,7 +117,7 @@ const AboutUs = () => {
             className="lg:col-span-5 relative group z-10"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, amount: 0.3 }}
+            viewport={{ once: true, amount: 0.3 }} // OPTIMIZACIÓN
           >
             <motion.div
               variants={imageReveal}
@@ -126,6 +126,7 @@ const AboutUs = () => {
               <img
                 src="/images/AboutUs/damian-diez.png"
                 alt="Damián Diez - Fundador Trexx"
+                loading="lazy" // OPTIMIZACIÓN IMAGEN
                 className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100 object-top"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 md:opacity-80"></div>
@@ -133,7 +134,7 @@ const AboutUs = () => {
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }} // OPTIMIZACIÓN
                 transition={{ delay: 0.5, duration: 0.6 }}
                 className="absolute bottom-6 left-6 md:bottom-8 md:left-8"
               >
@@ -150,11 +151,11 @@ const AboutUs = () => {
 
             {/* Borde decorativo detrás */}
             <motion.div
-              initial={{ opacity: 0, x: 0, y: 0 }}
-              whileInView={{ opacity: 1, x: 15, y: 15 }} // Reducido para móvil
-              viewport={{ once: false }}
-              transition={{ delay: 0.3, duration: 0.8, ease: "circOut" }}
-              className="absolute -z-10 top-0 left-0 w-full h-full border-2 border-[#75AADB]/30 rounded-sm hidden md:block" // Oculto en móviles muy pequeños si molesta
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }} // OPTIMIZACIÓN
+              transition={{ delay: 0.3, duration: 0.8 }}
+              className="absolute -z-10 top-4 left-4 w-full h-full border-2 border-[#75AADB]/30 rounded-sm hidden md:block"
             ></motion.div>
           </motion.div>
 
@@ -164,7 +165,7 @@ const AboutUs = () => {
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.2 }} // OPTIMIZACIÓN
           >
             <motion.div variants={fadeInUp}>
               <Quote
@@ -260,14 +261,11 @@ const TimelineItem = ({ step, index }) => (
   <motion.div
     initial={{ opacity: 0, x: -20 }}
     whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: false, amount: 0.5 }}
+    viewport={{ once: true, amount: 0.5 }} // OPTIMIZACIÓN
     transition={{ duration: 0.5, delay: index * 0.1 }}
     className="relative group"
   >
-    {/* Ajuste matemático para centrar el punto en la línea */}
-    {/* En móvil: pl-8 (32px). Punto w-4 (16px). Left: -32px - 8px = -40px */}
-    {/* En desktop: pl-16 (64px). Left: -64px - 8px = -72px */}
-    <span className="absolute -left-[40px] md:-left-[72px] top-2 w-4 h-4 bg-[#050505] border-2 border-[#75AADB] rounded-full group-hover:scale-150 transition-transform duration-300 shadow-[0_0_10px_rgba(117,170,219,0.3)]"></span>
+    <span className="absolute -left-[40px] md:-left-[72px] top-2 w-4 h-4 bg-[#050505] border-2 border-[#75AADB] rounded-full group-hover:scale-125 transition-transform duration-300 shadow-[0_0_10px_rgba(117,170,219,0.3)]"></span>
 
     <div className="flex flex-col md:flex-row gap-2 md:gap-12 items-start">
       <span className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white/20 to-transparent group-hover:from-[#75AADB] group-hover:to-transparent transition-all duration-500 italic">
@@ -289,7 +287,7 @@ const PhilosophyCard = ({ icon, title, text, delay }) => (
   <motion.div
     initial={{ opacity: 0, y: 30 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: false }}
+    viewport={{ once: true }} // OPTIMIZACIÓN
     transition={{ duration: 0.5, delay: delay }}
     whileHover={{ y: -5 }}
     className="bg-[#0a0a0a] p-6 md:p-8 border border-white/5 hover:border-[#75AADB]/30 transition-all duration-300 group hover:shadow-2xl hover:shadow-[#75AADB]/5 rounded-sm"

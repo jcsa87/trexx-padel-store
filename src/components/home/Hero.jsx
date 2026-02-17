@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from "react";
-import { Link } from "react-router-dom"; // Importamos Link
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -11,10 +11,10 @@ import {
   Crown,
 } from "lucide-react";
 
-// --- DATOS (IDs actualizados para coincidir con la DB) ---
+// --- DATOS ---
 const SLIDES = [
   {
-    id: 102, // ID real de la TREXX DRAGON en tu DB
+    id: 102, // ID real de la TREXX DRAGON
     brand: "TREXX",
     model: "DRAGON",
     tagline: "POTENCIA DE FUEGO",
@@ -30,7 +30,7 @@ const SLIDES = [
     color: "#dc2626",
   },
   {
-    id: 103, // ID real de la GOLD PRO en tu DB
+    id: 103, // ID real de la GOLD PRO
     brand: "TREXX",
     model: "GOLD PRO MAX",
     tagline: "EL TOQUE MIDAS",
@@ -97,6 +97,7 @@ const Hero = ({ current, setCurrent }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.5 }}
+            style={{ willChange: "opacity" }} // OPTIMIZACIÓN
             className="absolute inset-0 w-full h-full"
           >
             <div
@@ -119,7 +120,7 @@ const Hero = ({ current, setCurrent }) => {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }} // OPTIMIZACIÓN
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-4 mb-8"
               >
@@ -133,7 +134,7 @@ const Hero = ({ current, setCurrent }) => {
                 <motion.h2
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false }}
+                  viewport={{ once: true }} // OPTIMIZACIÓN
                   transition={{ delay: 0.3 }}
                   className="text-white text-3xl md:text-4xl font-extrabold tracking-tight mb-2 uppercase"
                 >
@@ -143,7 +144,7 @@ const Hero = ({ current, setCurrent }) => {
                 <motion.h1
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false }}
+                  viewport={{ once: true }} // OPTIMIZACIÓN
                   transition={{ delay: 0.4 }}
                   className="text-5xl sm:text-6xl lg:text-8xl font-extrabold tracking-tight text-white leading-[0.9]"
                 >
@@ -154,7 +155,7 @@ const Hero = ({ current, setCurrent }) => {
               <motion.p
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }} // OPTIMIZACIÓN
                 transition={{ delay: 0.5 }}
                 className="text-sm md:text-base font-bold tracking-widest uppercase mb-6"
                 style={{ color: SLIDES[current].color }}
@@ -165,7 +166,7 @@ const Hero = ({ current, setCurrent }) => {
               <motion.p
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }} // OPTIMIZACIÓN
                 transition={{ delay: 0.6 }}
                 className="text-white/60 text-base md:text-lg max-w-md leading-relaxed mb-10 font-sans"
               >
@@ -175,7 +176,7 @@ const Hero = ({ current, setCurrent }) => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }} // OPTIMIZACIÓN
                 transition={{ delay: 0.7 }}
                 className="flex flex-wrap gap-4 mb-12"
               >
@@ -200,7 +201,7 @@ const Hero = ({ current, setCurrent }) => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }} // OPTIMIZACIÓN
                 transition={{ delay: 0.8 }}
                 className="flex items-center gap-8"
               >
@@ -236,11 +237,12 @@ const Hero = ({ current, setCurrent }) => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, x: -30 }}
                 whileInView={{ opacity: 1, scale: 1, x: 0 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }} // OPTIMIZACIÓN
                 transition={{ duration: 0.8, ease: "circOut" }}
                 className="relative z-10 w-full max-w-[500px] aspect-square lg:aspect-[4/5] bg-[#0a0a0a] rounded-sm overflow-hidden border border-white/5 shadow-2xl"
                 style={{
                   boxShadow: `0 30px 60px -30px ${SLIDES[current].color}20`,
+                  willChange: "transform, opacity", // OPTIMIZACIÓN
                 }}
               >
                 {SLIDES[current].type === "video" ? (
@@ -258,6 +260,7 @@ const Hero = ({ current, setCurrent }) => {
                   <img
                     src={SLIDES[current].src}
                     alt={SLIDES[current].model}
+                    loading="lazy" // OPTIMIZACIÓN
                     className="w-full h-full object-cover opacity-90"
                   />
                 )}
@@ -291,6 +294,7 @@ const Hero = ({ current, setCurrent }) => {
               <motion.div
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
+                viewport={{ once: true }} // OPTIMIZACIÓN
                 transition={{ delay: 0.5 }}
                 className="absolute -z-10 top-6 -left-6 w-full h-full border border-white/5 rounded-sm hidden lg:block"
               />

@@ -94,10 +94,12 @@ const WhiteCard = ({ product, index }) => {
   const ref = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detectar móvil para desactivar hover logic
+  // Detectar móvil para desactivar hover logic (Optimizado)
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
+    checkMobile(); // Check inicial
+
+    // Debounce simple o listener directo (aquí directo está bien porque es ligero)
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
@@ -105,8 +107,12 @@ const WhiteCard = ({ product, index }) => {
   // 3D Tilt Logic (Solo Desktop)
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const xSpring = useSpring(x);
-  const ySpring = useSpring(y);
+
+  // Spring settings suavizados para mejor rendimiento
+  const springConfig = { damping: 20, stiffness: 100 };
+  const xSpring = useSpring(x, springConfig);
+  const ySpring = useSpring(y, springConfig);
+
   const transform = useMotionTemplate`rotateX(${xSpring}deg) rotateY(${ySpring}deg)`;
 
   const handleMouseMove = (e) => {
@@ -114,10 +120,14 @@ const WhiteCard = ({ product, index }) => {
     const rect = ref.current.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
+
+    // Cálculos
     const mouseX = (e.clientX - rect.left) * 15.5;
     const mouseY = (e.clientY - rect.top) * 15.5;
+
     const rX = (mouseY / height - 15.5 / 2) * -1;
     const rY = mouseX / width - 15.5 / 2;
+
     x.set(rX);
     y.set(rY);
   };
@@ -132,13 +142,12 @@ const WhiteCard = ({ product, index }) => {
   const transitionSmooth = { duration: 0.5, ease: [0.25, 1, 0.5, 1] };
 
   return (
-    // CAMBIO CLAVE: Envuelto en Link
     <Link to={`/shop/product/${product.id}`} className="block h-full w-full">
       <motion.div
         ref={ref}
         initial="rest"
-        whileHover={!isMobile ? "hover" : "rest"} // Desactiva hover en móvil
-        animate={isMobile ? "mobile" : "rest"} // Estado especial para móvil
+        whileHover={!isMobile ? "hover" : "rest"}
+        animate={isMobile ? "mobile" : "rest"}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         variants={{
@@ -151,10 +160,11 @@ const WhiteCard = ({ product, index }) => {
         }}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: false, amount: 0.1 }}
+        viewport={{ once: true, amount: 0.1 }} // OPTIMIZACIÓN: once: true
         style={{
           transformStyle: "preserve-3d",
           transform: isMobile ? "none" : transform,
+          willChange: isMobile ? "auto" : "transform", // OPTIMIZACIÓN: Hint GPU
         }}
         className="group relative h-[500px] md:h-[620px] w-full bg-[#0a0a0a] border border-white/10 hover:border-white/20 transition-colors duration-500 flex flex-col overflow-hidden cursor-pointer rounded-sm"
       >
@@ -196,6 +206,7 @@ const WhiteCard = ({ product, index }) => {
             <motion.img
               src={product.image}
               alt={product.name}
+              loading="lazy" // OPTIMIZACIÓN: Carga diferida
               className="w-[90%] h-[90%] object-contain mix-blend-multiply"
               variants={{
                 rest: { scale: 1 },

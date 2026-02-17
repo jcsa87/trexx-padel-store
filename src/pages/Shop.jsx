@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, memo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,7 +14,7 @@ import {
 // IMPORTAMOS LA BASE DE DATOS
 import { PRODUCTS_DB } from "../data/products";
 
-// --- FUNCIÓN AUXILIAR PARA INICIALIZAR FILTROS ---
+// --- FUNCIÓN AUXILIAR ---
 const getInitialFiltersFromUrl = (searchParams) => {
   const urlCategory = searchParams.get("category");
   let newCategory = [];
@@ -43,8 +43,8 @@ const getInitialFiltersFromUrl = (searchParams) => {
 
 const Shop = () => {
   const [searchParams] = useSearchParams();
+  const topRef = useRef(null);
 
-  // Estado para controlar cambio de URL (Solución ESLint)
   const currentCategoryParam = searchParams.get("category");
   const [prevCategoryParam, setPrevCategoryParam] =
     useState(currentCategoryParam);
@@ -53,64 +53,65 @@ const Shop = () => {
   const [sortOption, setSortOption] = useState("relevant");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- ESTADO DE LOS FILTROS ---
   const [filters, setFilters] = useState(() =>
     getInitialFiltersFromUrl(searchParams),
   );
 
-  // --- PATRÓN: RESET DE ESTADO EN RENDER (Reemplaza al useEffect) ---
-  // Si la categoría en la URL cambia, reseteamos los filtros inmediatamente.
   if (currentCategoryParam !== prevCategoryParam) {
     setPrevCategoryParam(currentCategoryParam);
     setFilters(getInitialFiltersFromUrl(searchParams));
-    setSearchQuery(""); // Limpiamos la búsqueda al cambiar de sección
+    setSearchQuery("");
   }
 
-  // --- MOTOR DE FILTRADO Y ORDENAMIENTO ---
   const processedProducts = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+
     let result = PRODUCTS_DB.filter((product) => {
-      // Búsqueda por Texto
-      const matchSearch = product.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      // 1. Búsqueda
+      if (searchQuery && !product.name.toLowerCase().includes(lowerQuery)) {
+        return false;
+      }
 
-      // Categoría
-      const matchCategory =
-        filters.category.length === 0 ||
-        filters.category.includes(product.category);
+      // 2. Categoría
+      if (
+        filters.category.length > 0 &&
+        !filters.category.includes(product.category)
+      ) {
+        return false;
+      }
 
-      // Género
-      const matchGender =
-        filters.gender.length === 0 ||
-        !product.gender ||
-        filters.gender.includes(product.gender) ||
-        (product.gender === "unisex" &&
+      // 3. Género
+      if (filters.gender.length > 0) {
+        const isUnisex = product.gender === "unisex";
+        const matchesGender = filters.gender.includes(product.gender);
+        const matchesUnisex =
+          isUnisex &&
           (filters.gender.includes("hombre") ||
-            filters.gender.includes("mujer")));
+            filters.gender.includes("mujer"));
 
-      // Precio
-      const matchPrice = product.price <= filters.priceRange[1];
+        if (!matchesGender && !matchesUnisex && product.gender) return false;
+      }
 
-      // Color
-      const matchColor =
-        filters.color.length === 0 || filters.color.includes(product.color);
+      // 4. Precio
+      if (product.price > filters.priceRange[1]) return false;
 
-      // Tipo
-      const matchType =
-        filters.type.length === 0 ||
-        (product.type && filters.type.includes(product.type));
+      // 5. Color
+      if (filters.color.length > 0 && !filters.color.includes(product.color)) {
+        return false;
+      }
 
-      return (
-        matchSearch &&
-        matchCategory &&
-        matchGender &&
-        matchPrice &&
-        matchColor &&
-        matchType
-      );
+      // 6. Tipo
+      if (
+        filters.type.length > 0 &&
+        product.type &&
+        !filters.type.includes(product.type)
+      ) {
+        return false;
+      }
+
+      return true;
     });
 
-    // Ordenar
     if (sortOption === "price_asc") {
       result.sort((a, b) => a.price - b.price);
     } else if (sortOption === "price_desc") {
@@ -120,7 +121,6 @@ const Shop = () => {
     return result;
   }, [filters, sortOption, searchQuery]);
 
-  // --- HANDLER DE FILTROS ---
   const toggleFilter = (type, value) => {
     setFilters((prev) => {
       const current = prev[type];
@@ -132,11 +132,10 @@ const Shop = () => {
   };
 
   return (
-    <div className="bg-[#050505] min-h-screen pt-32 pb-20">
+    <div className="bg-[#050505] min-h-screen pt-32 pb-20" ref={topRef}>
       {/* HEADER */}
       <div className="max-w-[1400px] mx-auto px-6 mb-8 border-b border-white/10 pb-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 text-left">
-          {/* TÍTULO */}
           <div className="w-full lg:w-auto">
             <h1 className="text-4xl md:text-6xl font-black italic text-white tracking-tighter uppercase">
               Catálogo <span className="text-trexx-red">2026</span>
@@ -146,9 +145,7 @@ const Shop = () => {
             </p>
           </div>
 
-          {/* CONTROLES */}
           <div className="w-full lg:w-auto flex flex-col md:flex-row gap-4 items-center">
-            {/* BUSCADOR */}
             <div className="relative w-full md:w-80 group">
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-trexx-red transition-colors"
@@ -171,7 +168,6 @@ const Shop = () => {
               )}
             </div>
 
-            {/* ORDENAMIENTO */}
             <div className="relative w-full md:w-64">
               <select
                 value={sortOption}
@@ -189,7 +185,6 @@ const Shop = () => {
           </div>
         </div>
 
-        {/* BOTÓN FILTROS MÓVIL */}
         <button
           onClick={() => setIsMobileFilterOpen(true)}
           className="md:hidden flex items-center justify-center gap-2 bg-white text-black px-4 py-3 font-bold uppercase text-xs tracking-widest mt-6 w-full hover:bg-gray-200 transition-colors"
@@ -200,7 +195,6 @@ const Shop = () => {
 
       {/* CONTENIDO PRINCIPAL */}
       <div className="max-w-[1400px] mx-auto px-6 flex gap-12 relative">
-        {/* SIDEBAR (DESKTOP) */}
         <aside className="hidden md:block w-64 flex-shrink-0 sticky top-32 h-[calc(100vh-150px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           <FilterContent
             filters={filters}
@@ -209,15 +203,11 @@ const Shop = () => {
           />
         </aside>
 
-        {/* GRILLA PRODUCTOS */}
         <div className="flex-1">
           <AnimatePresence mode="popLayout">
             {processedProducts.length > 0 ? (
               <motion.div
                 layout
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
                 className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-12"
               >
                 {processedProducts.map((product) => (
@@ -225,7 +215,11 @@ const Shop = () => {
                 ))}
               </motion.div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-white/30 border border-dashed border-white/10 rounded-lg">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-20 text-white/30 border border-dashed border-white/10 rounded-lg"
+              >
                 <Search size={48} className="mb-4 opacity-50" />
                 <p className="text-xl font-bold uppercase">
                   {searchQuery
@@ -247,13 +241,12 @@ const Shop = () => {
                 >
                   Limpiar Todo
                 </button>
-              </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
 
-      {/* DRAWER MÓVIL */}
       <AnimatePresence>
         {isMobileFilterOpen && (
           <>
@@ -495,50 +488,56 @@ const ColorSwatch = ({ color, selected, onClick }) => {
   );
 };
 
-const ProductCard = ({ item }) => (
-  <Link to={`/shop/product/${item.id}`} className="group cursor-pointer block">
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.3 }}
+// --- CORRECCIÓN: DEFINICIÓN DE COMPONENTE MEMOIZADO (SOLUCIÓN ERROR) ---
+const ProductCard = memo(function ProductCard({ item }) {
+  return (
+    <Link
+      to={`/shop/product/${item.id}`}
+      className="group cursor-pointer block"
     >
-      <div className="relative aspect-[3/4] bg-[#0a0a0a] rounded-sm overflow-hidden mb-4 border border-white/5 group-hover:border-white/20 transition-all duration-300">
-        <img
-          src={item.img}
-          alt={item.name}
-          className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500"
-        />
+      <motion.div
+        layout
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.3 }}
+        style={{ willChange: "transform" }}
+      >
+        <div className="relative aspect-[3/4] bg-[#0a0a0a] rounded-sm overflow-hidden mb-4 border border-white/5 group-hover:border-white/20 transition-all duration-300">
+          <img
+            src={item.img}
+            alt={item.name}
+            loading="lazy"
+            className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500"
+          />
 
-        {/* Botón rápido */}
-        <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-          <button className="w-full bg-white text-black font-bold uppercase text-xs py-3 tracking-widest hover:bg-trexx-red hover:text-white transition-colors">
-            Ver Detalles
-          </button>
+          <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            <button className="w-full bg-white text-black font-bold uppercase text-xs py-3 tracking-widest hover:bg-trexx-red hover:text-white transition-colors">
+              Ver Detalles
+            </button>
+          </div>
+
+          {item.price < 50000 && item.category !== "accesorios" && (
+            <div className="absolute top-3 left-3 bg-trexx-red text-white text-[9px] font-black px-2 py-1 uppercase tracking-wider rounded-sm">
+              Hot
+            </div>
+          )}
         </div>
 
-        {/* Badge "Hot" */}
-        {item.price < 50000 && item.category !== "accesorios" && (
-          <div className="absolute top-3 left-3 bg-trexx-red text-white text-[9px] font-black px-2 py-1 uppercase tracking-wider rounded-sm">
-            Hot
-          </div>
-        )}
-      </div>
-
-      <div>
-        <h3 className="text-white font-bold text-sm tracking-wide uppercase truncate">
-          {item.name}
-        </h3>
-        <p className="text-gray-400 font-mono text-xs mt-1 font-bold">
-          ${item.price.toLocaleString()}
-        </p>
-        <p className="text-[10px] text-white/30 uppercase mt-1">
-          6 Cuotas sin interés
-        </p>
-      </div>
-    </motion.div>
-  </Link>
-);
+        <div>
+          <h3 className="text-white font-bold text-sm tracking-wide uppercase truncate">
+            {item.name}
+          </h3>
+          <p className="text-gray-400 font-mono text-xs mt-1 font-bold">
+            ${item.price.toLocaleString()}
+          </p>
+          <p className="text-[10px] text-white/30 uppercase mt-1">
+            6 Cuotas sin interés
+          </p>
+        </div>
+      </motion.div>
+    </Link>
+  );
+});
 
 export default Shop;

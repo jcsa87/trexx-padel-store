@@ -4,11 +4,26 @@ import {
   useScroll,
   useTransform,
   AnimatePresence,
+  Variants,
 } from "framer-motion";
 import { ArrowDown, Zap, ChevronRight, ChevronLeft } from "lucide-react";
 
+// --- INTERFACES (TypeScript) ---
+interface HeroSlide {
+  id: number;
+  badge: string;
+  title: React.ReactNode;
+  description: string;
+  videoSrc: string;
+  themeColor: string;
+  overlayInfo: {
+    label: string;
+    title: string;
+  };
+}
+
 // --- DATOS ---
-const HERO_SLIDES = [
+const HERO_SLIDES: HeroSlide[] = [
   {
     id: 1,
     badge: "New Season 2026",
@@ -60,56 +75,81 @@ const HERO_SLIDES = [
   },
 ];
 
-// --- VARIANTES ---
-const textVariants = {
-  hidden: { opacity: 0, x: -50 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: "easeOut" } },
-  exit: { opacity: 0, x: 50, transition: { duration: 0.5 } },
+// --- VARIANTES DE ANIMACIÓN ---
+const textVariants: Variants = {
+  hidden: { opacity: 0, x: -30 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+  exit: {
+    opacity: 0,
+    x: 30,
+    transition: { duration: 0.4 },
+  },
 };
 
-const videoContainerVariants = {
-  hidden: { opacity: 0, scale: 0.9, y: 30 },
+const videoContainerVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.95, y: 20 },
   visible: {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { duration: 0.8, ease: "circOut", delay: 0.1 },
+    transition: { duration: 0.6, ease: "circOut", delay: 0.1 },
   },
-  exit: { opacity: 0, scale: 0.9, y: -30, transition: { duration: 0.5 } },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    y: -20,
+    transition: { duration: 0.4 },
+  },
 };
 
+// --- COMPONENTE PRINCIPAL ---
 const VideoHero = () => {
   const [current, setCurrent] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const containerRef = useRef(null);
-  const videoRef = useRef(null);
+  const containerRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Hook para partículas (evita mismatch en re-renders)
+  const [particles, setParticles] = useState<
+    Array<{ x: string; y: string; duration: number; delay: number }>
+  >([]);
+
+  useEffect(() => {
+    setParticles(
+      [...Array(4)].map(() => ({
+        x: Math.random() * 100 + "%",
+        y: Math.random() * 100 + "%",
+        duration: Math.random() * 5 + 8,
+        delay: Math.random() * 5,
+      })),
+    );
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
 
-  const yContent = useTransform(scrollYProgress, [0, 1], [0, 100]);
-  const opacityHero = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  const yContent = useTransform(scrollYProgress, [0, 1], [0, 50]);
+  const opacityHero = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   const nextSlide = () => {
-    setProgress(0);
     setCurrent((prev) => (prev + 1) % HERO_SLIDES.length);
   };
 
   const prevSlide = () => {
-    setProgress(0);
     setCurrent((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
   };
 
   const activeSlide = HERO_SLIDES[current];
 
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const currentProgress =
-        (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(currentProgress);
-    }
+  // Función de scroll suave
+  const scrollToProductHero = () => {
+    const nextSection = document.getElementById("product-hero");
+    nextSection?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -117,51 +157,46 @@ const VideoHero = () => {
       ref={containerRef}
       className="relative min-h-[105vh] w-full bg-[#050505] overflow-hidden flex items-center pt-32 pb-32 lg:py-0 z-10"
     >
-      {/* --- 1. FONDO AVANZADO CON MOVIMIENTO --- */}
+      {/* --- 1. FONDO AVANZADO --- */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Grilla Cibernética con Desplazamiento Constante */}
-        <motion.div
-          animate={{ backgroundPosition: ["0px 0px", "50px 50px"] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-70"
-        ></motion.div>
+        {/* Grilla Cibernética */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-70"></div>
 
-        {/* Partículas Flotantes Rápidas */}
-        {[...Array(8)].map((_, i) => (
+        {/* Partículas Flotantes */}
+        {particles.map((p, i) => (
           <motion.div
             key={i}
             className="absolute w-[2px] h-[2px] bg-white/30 rounded-full"
-            initial={{
-              x: Math.random() * 100 + "%",
-              y: Math.random() * 100 + "%",
-              opacity: 0,
-            }}
+            initial={{ x: p.x, y: p.y, opacity: 0 }}
             animate={{
-              y: [null, Math.random() * -200], // Suben más rápido
-              opacity: [0, 0.8, 0],
+              y: [null, -100], // Movimiento relativo hacia arriba
+              opacity: [0, 0.6, 0],
             }}
             transition={{
-              duration: Math.random() * 5 + 5,
+              duration: p.duration,
               repeat: Infinity,
               ease: "linear",
-              delay: Math.random() * 5,
+              delay: p.delay,
             }}
           />
         ))}
 
-        {/* Orbes Pulsantes */}
+        {/* Orbes Pulsantes (Usamos estilo inline porque es dinámico por slide) */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSlide.id}
             initial={{ opacity: 0 }}
             animate={{
-              opacity: [0.15, 0.25, 0.15],
-              scale: [1, 1.2, 1],
+              opacity: [0.15, 0.2, 0.15],
+              scale: [1, 1.1, 1],
             }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full blur-[150px] mix-blend-screen"
-            style={{ backgroundColor: `${activeSlide.themeColor}30` }}
+            style={{
+              backgroundColor: `${activeSlide.themeColor}30`,
+              willChange: "transform, opacity",
+            }}
           />
         </AnimatePresence>
 
@@ -188,8 +223,8 @@ const VideoHero = () => {
                   <Zap
                     size={12}
                     style={{
-                      fill: activeSlide.themeColor,
                       color: activeSlide.themeColor,
+                      fill: activeSlide.themeColor,
                     }}
                   />
                   <span className="text-white font-bold tracking-[0.2em] text-[10px] uppercase">
@@ -213,11 +248,7 @@ const VideoHero = () => {
 
                 <div className="flex flex-wrap gap-6 items-center">
                   <button
-                    onClick={() => {
-                      const nextSection =
-                        document.getElementById("product-hero");
-                      nextSection?.scrollIntoView({ behavior: "smooth" });
-                    }}
+                    onClick={scrollToProductHero}
                     className="group relative px-8 py-4 bg-white text-black font-black italic tracking-widest uppercase overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-shadow duration-300"
                   >
                     <div
@@ -232,31 +263,37 @@ const VideoHero = () => {
               </motion.div>
             </AnimatePresence>
 
+            {/* Navegación Slides */}
             <div className="flex items-center gap-4 mt-16">
               <button
                 onClick={prevSlide}
+                aria-label="Previous slide" // Corrección Accesibilidad
                 className="p-3 rounded-full border border-white/10 hover:bg-white/10 transition-colors text-white hover:scale-110 active:scale-95 duration-200"
               >
                 <ChevronLeft size={20} />
               </button>
+
               <div className="flex gap-2">
                 {HERO_SLIDES.map((_, idx) => (
                   <div
                     key={idx}
-                    className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${current === idx ? "w-12" : "w-2 bg-white/20 hover:bg-white/40"}`}
+                    className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
+                      current === idx
+                        ? "w-12"
+                        : "w-2 bg-white/20 hover:bg-white/40"
+                    }`}
                     style={{
                       backgroundColor:
-                        current === idx ? activeSlide.themeColor : "",
+                        current === idx ? activeSlide.themeColor : undefined,
                     }}
-                    onClick={() => {
-                      setProgress(0);
-                      setCurrent(idx);
-                    }}
+                    onClick={() => setCurrent(idx)}
                   />
                 ))}
               </div>
+
               <button
                 onClick={nextSlide}
+                aria-label="Next slide" // Corrección Accesibilidad
                 className="p-3 rounded-full border border-white/10 hover:bg-white/10 transition-colors text-white hover:scale-110 active:scale-95 duration-200"
               >
                 <ChevronRight size={20} />
@@ -264,7 +301,7 @@ const VideoHero = () => {
             </div>
           </motion.div>
 
-          {/* --- COLUMNA VIDEO (Levitación y Movimiento) --- */}
+          {/* --- COLUMNA VIDEO --- */}
           <motion.div className="relative order-2 flex justify-center lg:justify-end lg:pr-8 z-10">
             <AnimatePresence mode="wait">
               <motion.div
@@ -275,7 +312,7 @@ const VideoHero = () => {
                 variants={videoContainerVariants}
                 className="relative flex flex-col items-center"
               >
-                {/* ANIMACIÓN DE LEVITACIÓN PERPETUA */}
+                {/* LEVITACIÓN PERPETUA */}
                 <motion.div
                   animate={{ y: [-10, 10, -10] }}
                   transition={{
@@ -283,9 +320,10 @@ const VideoHero = () => {
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
+                  style={{ willChange: "transform" }}
                   className="relative"
                 >
-                  {/* Marco del Video (Tamaño Revertido a Estándar) */}
+                  {/* Marco del Video */}
                   <div className="relative w-[280px] md:w-[340px] aspect-[9/16] bg-black rounded-2xl overflow-hidden border border-white/10 shadow-2xl group">
                     <video
                       ref={videoRef}
@@ -294,14 +332,13 @@ const VideoHero = () => {
                       muted
                       loop
                       playsInline
-                      onTimeUpdate={handleTimeUpdate}
                       onEnded={nextSlide}
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500 scale-105"
                     />
 
                     <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]/20 opacity-80 pointer-events-none"></div>
 
-                    {/* UI Video */}
+                    {/* UI Video Overlay */}
                     <div className="absolute bottom-6 left-6 right-6 pointer-events-none">
                       <div className="flex justify-between items-end">
                         <div>
@@ -329,63 +366,47 @@ const VideoHero = () => {
                         className="absolute top-0 left-0 w-full h-[50%] bg-gradient-to-b from-transparent via-white/10 to-transparent"
                         animate={{ top: ["-100%", "200%"] }}
                         transition={{
-                          duration: 3,
+                          duration: 4,
                           repeat: Infinity,
                           ease: "linear",
                           delay: 1,
                         }}
+                        style={{ willChange: "top" }}
                       />
                     </div>
                   </div>
 
-                  {/* Barra de Progreso */}
-                  <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: "100%", opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="w-full h-1 bg-white/10 mt-6 rounded-full overflow-hidden"
-                  >
+                  {/* Barra de Progreso Simulada */}
+                  <div className="w-full h-1 bg-white/10 mt-6 rounded-full overflow-hidden">
                     <motion.div
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 15, ease: "linear" }}
+                      key={activeSlide.id}
                       className="h-full rounded-full"
-                      style={{
-                        width: `${progress}%`,
-                        backgroundColor: activeSlide.themeColor,
-                      }}
-                      transition={{ ease: "linear", duration: 0.1 }}
+                      style={{ backgroundColor: activeSlide.themeColor }}
                     />
-                  </motion.div>
+                  </div>
                 </motion.div>
 
-                {/* Elementos Decorativos Flotantes Detrás (Más movimiento) */}
+                {/* Elementos Decorativos de Fondo */}
                 <motion.div
                   animate={{
-                    y: [0, -20, 0],
-                    rotate: [0, 10, 0],
-                    scale: [1, 1.1, 1],
+                    y: [0, -15, 0],
+                    rotate: [0, 5, 0],
+                    scale: [1, 1.05, 1],
                   }}
                   transition={{
-                    duration: 5,
+                    duration: 8,
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
-                  className="absolute -z-10 top-20 -right-4 w-32 h-32 border rounded-full backdrop-blur-sm"
                   style={{
                     borderColor: `${activeSlide.themeColor}40`,
                     backgroundColor: `${activeSlide.themeColor}10`,
+                    willChange: "transform",
                   }}
-                />
-                <motion.div
-                  animate={{
-                    y: [0, 25, 0],
-                    x: [0, -10, 0],
-                  }}
-                  transition={{
-                    duration: 7,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 1,
-                  }}
-                  className="absolute -z-10 bottom-10 -left-6 w-20 h-20 border border-white/10 rounded-full bg-white/5 backdrop-blur-sm"
+                  className="absolute -z-10 top-20 -right-4 w-32 h-32 border rounded-full backdrop-blur-sm"
                 />
               </motion.div>
             </AnimatePresence>

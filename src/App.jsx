@@ -10,10 +10,13 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { CartProvider } from "./context/CartContext";
 
 // --- COMPONENTS ---
-// 1. Cargamos de forma normal los componentes críticos del "Above the Fold" (Lo primero que se ve)
+// 1. Cargamos de forma normal los componentes críticos del "Above the Fold"
 import Navbar from "./components/layout/Navbar";
 import NewReleaseHero from "./components/home/NewReleaseHero"; // El Hero principal
 import CartDrawer from "./components/cart/CartDrawer";
+
+// --- CORRECCIÓN AQUÍ: Agregamos LazyMotion al import ---
+import { LazyMotion, domAnimation } from "framer-motion";
 
 // 2. LAZY LOADING: El resto se carga solo cuando se necesita
 const Footer = lazy(() => import("./components/layout/Footer"));
@@ -79,107 +82,110 @@ function App() {
 
   return (
     <CartProvider>
-      <Router>
-        <ScrollToTop />
-        <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col">
-          <CartDrawer />
-          <Navbar />
+      {/* LazyMotion reduce el tamaño del bundle inicial de Framer Motion */}
+      <LazyMotion features={domAnimation}>
+        <Router>
+          <ScrollToTop />
+          <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col">
+            <CartDrawer />
+            <Navbar />
 
-          <main className="flex-grow">
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* --- HOME PAGE --- */}
-                <Route
-                  path="/"
-                  element={
-                    <>
-                      {/* El Hero principal carga directo para evitar saltos */}
-                      <div className="relative z-0">
-                        <NewReleaseHero />
-                      </div>
-
-                      {/* El resto se carga diferido */}
-                      <div className="relative z-0">
-                        <VideoHero />
-                      </div>
-
-                      <div className="relative z-20">
-                        <InfiniteMarquee />
-                      </div>
-
-                      <div className="relative z-10 bg-[#050505]">
-                        <FeaturedProducts />
-
-                        <SectionDivider
-                          text1="High Performance"
-                          text2="Carbon Innovation"
-                          text3="Next Gen Padel"
-                          reverse={true}
-                        />
-
-                        <div id="product-hero" className="relative z-10">
-                          <Hero
-                            current={currentSlide}
-                            setCurrent={setCurrentSlide}
-                          />
+            <main className="flex-grow">
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* --- HOME PAGE --- */}
+                  <Route
+                    path="/"
+                    element={
+                      <>
+                        {/* El Hero principal carga directo para evitar saltos */}
+                        <div className="relative z-0">
+                          <NewReleaseHero />
                         </div>
 
-                        <SectionDivider
-                          text1="Argentine DNA"
-                          text2="Professional Grade"
-                          text3="Break The Limits"
-                        />
+                        {/* El resto se carga diferido */}
+                        <div className="relative z-0">
+                          <VideoHero />
+                        </div>
 
-                        <AboutUs />
+                        <div className="relative z-20">
+                          <InfiniteMarquee />
+                        </div>
+
+                        <div className="relative z-10 bg-[#050505]">
+                          <FeaturedProducts />
+
+                          <SectionDivider
+                            text1="High Performance"
+                            text2="Carbon Innovation"
+                            text3="Next Gen Padel"
+                            reverse={true}
+                          />
+
+                          <div id="product-hero" className="relative z-10">
+                            <Hero
+                              current={currentSlide}
+                              setCurrent={setCurrentSlide}
+                            />
+                          </div>
+
+                          <SectionDivider
+                            text1="Argentine DNA"
+                            text2="Professional Grade"
+                            text3="Break The Limits"
+                          />
+
+                          <AboutUs />
+                          <Contact />
+                        </div>
+                      </>
+                    }
+                  />
+
+                  {/* --- SHOP ROUTES --- */}
+                  <Route path="/shop" element={<Shop />} />
+                  <Route path="/palas" element={<Shop />} />
+                  <Route path="/ropa" element={<Shop />} />
+                  <Route path="/zapatillas" element={<Shop />} />
+                  <Route path="/accesorios" element={<Shop />} />
+
+                  {/* --- PRODUCT DETAIL --- */}
+                  <Route path="/shop/product/:id" element={<ProductDetail />} />
+
+                  {/* --- PÁGINAS ESTÁTICAS --- */}
+                  <Route
+                    path="/historia"
+                    element={<PagePlaceholder title="NUESTRA HISTORIA" />}
+                  />
+                  <Route
+                    path="/tecnologia"
+                    element={<PagePlaceholder title="TECNOLOGÍA" />}
+                  />
+                  <Route
+                    path="/jugadores"
+                    element={<PagePlaceholder title="TEAM TREXX" />}
+                  />
+
+                  <Route
+                    path="/contacto"
+                    element={
+                      <div className="pt-20">
                         <Contact />
                       </div>
-                    </>
-                  }
-                />
+                    }
+                  />
 
-                {/* --- SHOP ROUTES --- */}
-                <Route path="/shop" element={<Shop />} />
-                <Route path="/palas" element={<Shop />} />
-                <Route path="/ropa" element={<Shop />} />
-                <Route path="/zapatillas" element={<Shop />} />
-                <Route path="/accesorios" element={<Shop />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </main>
 
-                {/* --- PRODUCT DETAIL --- */}
-                <Route path="/shop/product/:id" element={<ProductDetail />} />
-
-                {/* --- PÁGINAS ESTÁTICAS --- */}
-                <Route
-                  path="/historia"
-                  element={<PagePlaceholder title="NUESTRA HISTORIA" />}
-                />
-                <Route
-                  path="/tecnologia"
-                  element={<PagePlaceholder title="TECNOLOGÍA" />}
-                />
-                <Route
-                  path="/jugadores"
-                  element={<PagePlaceholder title="TEAM TREXX" />}
-                />
-
-                <Route
-                  path="/contacto"
-                  element={
-                    <div className="pt-20">
-                      <Contact />
-                    </div>
-                  }
-                />
-
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+            <Suspense fallback={null}>
+              <Footer />
             </Suspense>
-          </main>
-
-          <Suspense fallback={null}>
-            <Footer />
-          </Suspense>
-        </div>
-      </Router>
+          </div>
+        </Router>
+      </LazyMotion>
     </CartProvider>
   );
 }
