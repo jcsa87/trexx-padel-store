@@ -4,27 +4,32 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 
 // --- CONTEXTO DEL CARRITO ---
 import { CartProvider } from "./context/CartContext";
 
 // --- COMPONENTS ---
+// 1. Cargamos de forma normal los componentes críticos del "Above the Fold" (Lo primero que se ve)
 import Navbar from "./components/layout/Navbar";
-import Footer from "./components/layout/Footer";
-import VideoHero from "./components/home/VideoHero";
-import Hero from "./components/home/Hero";
-import InfiniteMarquee from "./components/ui/InfiniteMarquee";
-import FeaturedProducts from "./components/home/FeaturedProducts";
-import AboutUs from "./components/home/AboutUs";
-import Contact from "./components/home/Contact";
-import SectionDivider from "./components/ui/SectionDivider"; // Componente de Cinta
-import CartDrawer from "./components/cart/CartDrawer"; // Componente del Carrito
+import NewReleaseHero from "./components/home/NewReleaseHero"; // El Hero principal
+import CartDrawer from "./components/cart/CartDrawer";
 
-// --- PAGES ---
-import Shop from "./pages/Shop";
-import ProductDetail from "./pages/ProductDetail";
-import NewReleaseHero from "./components/home/NewReleaseHero";
+// 2. LAZY LOADING: El resto se carga solo cuando se necesita
+const Footer = lazy(() => import("./components/layout/Footer"));
+const VideoHero = lazy(() => import("./components/home/VideoHero"));
+const Hero = lazy(() => import("./components/home/Hero"));
+const InfiniteMarquee = lazy(() => import("./components/ui/InfiniteMarquee"));
+const FeaturedProducts = lazy(
+  () => import("./components/home/FeaturedProducts"),
+);
+const AboutUs = lazy(() => import("./components/home/AboutUs"));
+const Contact = lazy(() => import("./components/home/Contact"));
+const SectionDivider = lazy(() => import("./components/ui/SectionDivider"));
+
+// --- PAGES (LAZY) ---
+const Shop = lazy(() => import("./pages/Shop"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 
 // --- SCROLL TO TOP ---
 const ScrollToTop = () => {
@@ -62,119 +67,117 @@ const NotFound = () => (
   </div>
 );
 
+// --- LOADING SPINNER ---
+const PageLoader = () => (
+  <div className="h-screen w-full flex items-center justify-center bg-[#050505] text-trexx-red font-bold tracking-widest animate-pulse">
+    CARGANDO...
+  </div>
+);
+
 function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   return (
-    // 1. Envolvemos la app con el Provider del Carrito
     <CartProvider>
       <Router>
         <ScrollToTop />
         <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-trexx-red selection:text-white flex flex-col">
-          {/* 2. Panel del Carrito Global */}
           <CartDrawer />
-
-          {/* Navbar Fijo */}
           <Navbar />
 
           <main className="flex-grow">
-            <Routes>
-              {/* --- HOME PAGE --- */}
-              <Route
-                path="/"
-                element={
-                  <>
-                    <div className="relative z-0">
-                      <NewReleaseHero />
-                    </div>
-
-                    {/* 1. VIDEO HERO (Nuevo Principal) */}
-                    <div className="relative z-0">
-                      <VideoHero />
-                    </div>
-
-                    {/* 3. MARQUEE */}
-                    <div className="relative z-20">
-                      <InfiniteMarquee />
-                    </div>
-
-                    <div className="relative z-10 bg-[#050505]">
-                      {/* Productos Destacados */}
-                      <FeaturedProducts />
-
-                      {/* --- CINTA SUPERIOR (NUEVA) --- */}
-                      {/* Transición hacia el slider de productos */}
-                      <SectionDivider
-                        text1="High Performance"
-                        text2="Carbon Innovation"
-                        text3="Next Gen Padel"
-                        reverse={true}
-                      />
-
-                      {/* 2. PRODUCT HERO (Antiguo Hero, ahora secundario) */}
-                      <div id="product-hero" className="relative z-10">
-                        <Hero
-                          current={currentSlide}
-                          setCurrent={setCurrentSlide}
-                        />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* --- HOME PAGE --- */}
+                <Route
+                  path="/"
+                  element={
+                    <>
+                      {/* El Hero principal carga directo para evitar saltos */}
+                      <div className="relative z-0">
+                        <NewReleaseHero />
                       </div>
 
-                      {/* --- CINTA INFERIOR (EXISTENTE) --- */}
-                      {/* Transición hacia la historia */}
-                      <SectionDivider
-                        text1="Argentine DNA"
-                        text2="Professional Grade"
-                        text3="Break The Limits"
-                      />
+                      {/* El resto se carga diferido */}
+                      <div className="relative z-0">
+                        <VideoHero />
+                      </div>
 
-                      {/* Historia (ADN Argentino) */}
-                      <AboutUs />
+                      <div className="relative z-20">
+                        <InfiniteMarquee />
+                      </div>
 
-                      {/* Contacto */}
+                      <div className="relative z-10 bg-[#050505]">
+                        <FeaturedProducts />
+
+                        <SectionDivider
+                          text1="High Performance"
+                          text2="Carbon Innovation"
+                          text3="Next Gen Padel"
+                          reverse={true}
+                        />
+
+                        <div id="product-hero" className="relative z-10">
+                          <Hero
+                            current={currentSlide}
+                            setCurrent={setCurrentSlide}
+                          />
+                        </div>
+
+                        <SectionDivider
+                          text1="Argentine DNA"
+                          text2="Professional Grade"
+                          text3="Break The Limits"
+                        />
+
+                        <AboutUs />
+                        <Contact />
+                      </div>
+                    </>
+                  }
+                />
+
+                {/* --- SHOP ROUTES --- */}
+                <Route path="/shop" element={<Shop />} />
+                <Route path="/palas" element={<Shop />} />
+                <Route path="/ropa" element={<Shop />} />
+                <Route path="/zapatillas" element={<Shop />} />
+                <Route path="/accesorios" element={<Shop />} />
+
+                {/* --- PRODUCT DETAIL --- */}
+                <Route path="/shop/product/:id" element={<ProductDetail />} />
+
+                {/* --- PÁGINAS ESTÁTICAS --- */}
+                <Route
+                  path="/historia"
+                  element={<PagePlaceholder title="NUESTRA HISTORIA" />}
+                />
+                <Route
+                  path="/tecnologia"
+                  element={<PagePlaceholder title="TECNOLOGÍA" />}
+                />
+                <Route
+                  path="/jugadores"
+                  element={<PagePlaceholder title="TEAM TREXX" />}
+                />
+
+                <Route
+                  path="/contacto"
+                  element={
+                    <div className="pt-20">
                       <Contact />
                     </div>
-                  </>
-                }
-              />
+                  }
+                />
 
-              {/* --- SHOP ROUTES --- */}
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/palas" element={<Shop />} />
-              <Route path="/ropa" element={<Shop />} />
-              <Route path="/zapatillas" element={<Shop />} />
-              <Route path="/accesorios" element={<Shop />} />
-
-              {/* --- PRODUCT DETAIL --- */}
-              <Route path="/shop/product/:id" element={<ProductDetail />} />
-
-              {/* --- PÁGINAS ESTÁTICAS / PLACEHOLDERS --- */}
-              <Route
-                path="/historia"
-                element={<PagePlaceholder title="NUESTRA HISTORIA" />}
-              />
-              <Route
-                path="/tecnologia"
-                element={<PagePlaceholder title="TECNOLOGÍA" />}
-              />
-              <Route
-                path="/jugadores"
-                element={<PagePlaceholder title="TEAM TREXX" />}
-              />
-
-              <Route
-                path="/contacto"
-                element={
-                  <div className="pt-20">
-                    <Contact />
-                  </div>
-                }
-              />
-
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </main>
 
-          <Footer />
+          <Suspense fallback={null}>
+            <Footer />
+          </Suspense>
         </div>
       </Router>
     </CartProvider>
