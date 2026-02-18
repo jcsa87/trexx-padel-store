@@ -125,7 +125,7 @@ export const PRODUCTS_DB = [
   // --- ZAPATILLAS ---
   {
     id: 201,
-    name: "TREXX PRO COURT BLACK FIRE",
+    name: "TREXX PRO COURT",
     price: 156000,
     category: "zapatillas",
     gender: "hombre",
@@ -147,12 +147,12 @@ export const PRODUCTS_DB = [
   },
   {
     id: 203,
-    name: "TREXX PRO COURT 2026 NAVY",
+    name: "TREXX PRO COURT 2026 NEGRAS",
     price: 130000,
     category: "zapatillas",
     gender: "hombre",
-    color: "blue",
-    img: "/images/calzados/pro-court-navy.png",
+    color: "black",
+    img: "/images/calzados/pro-court-2026.png",
     description: "Estabilidad superior en cada pisada.",
     features: ["Suela Clay", "Estabilizador central", "Tejido técnico"],
   },
