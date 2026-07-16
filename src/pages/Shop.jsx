@@ -11,8 +11,7 @@ import {
   Search,
 } from "lucide-react";
 
-// IMPORTAMOS LA BASE DE DATOS
-import { PRODUCTS_DB } from "../data/products";
+import { useAdminProductos } from "../context/AdminProductosContext";
 
 // --- FUNCIÓN AUXILIAR ---
 const getInitialFiltersFromUrl = (searchParams) => {
@@ -42,6 +41,7 @@ const getInitialFiltersFromUrl = (searchParams) => {
 };
 
 const Shop = () => {
+  const { productos: PRODUCTS_DB } = useAdminProductos();
   const [searchParams] = useSearchParams();
   const topRef = useRef(null);
 

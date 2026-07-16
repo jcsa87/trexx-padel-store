@@ -7,6 +7,7 @@ import {
   useSpring,
 } from "framer-motion";
 import { ArrowUpRight, Zap, Shield, BarChart3, ArrowRight } from "lucide-react";
+import { useAdminProductos } from "../../context/AdminProductosContext";
 
 const FEATURED_PADELS = [
   {
@@ -42,6 +43,18 @@ const FEATURED_PADELS = [
 ];
 
 const FeaturedProducts = () => {
+  const { productos } = useAdminProductos();
+
+  const featured = FEATURED_PADELS.map(p => {
+    const dbProduct = productos.find(db => db.id === p.id);
+    return dbProduct ? {
+      ...p,
+      name: dbProduct.name,
+      price: dbProduct.price.toLocaleString("es-AR"),
+      image: dbProduct.img || p.image,
+    } : p;
+  });
+
   return (
     <section className="py-20 md:py-32 px-4 bg-[#050505] relative overflow-hidden">
       {/* Fondo Decorativo */}
@@ -80,7 +93,7 @@ const FeaturedProducts = () => {
 
         {/* GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {FEATURED_PADELS.map((pala, index) => (
+          {featured.map((pala, index) => (
             <WhiteCard key={pala.id} product={pala} index={index} />
           ))}
         </div>

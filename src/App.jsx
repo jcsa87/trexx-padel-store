@@ -8,8 +8,9 @@ import { useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { AnimatePresence, LazyMotion, domAnimation } from "framer-motion";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
-// --- CONTEXTO DEL CARRITO ---
+// --- CONTEXTOS ---
 import { CartProvider } from "./context/CartContext";
+import { AdminProductosProvider } from "./context/AdminProductosContext";
 
 // --- COMPONENTS CRÍTICOS ---
 import Navbar from "./components/layout/Navbar";
@@ -32,6 +33,9 @@ const SectionDivider = lazy(() => import("./components/ui/SectionDivider"));
 // --- PAGES LAZY ---
 const Shop = lazy(() => import("./pages/Shop"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const ProductosAdmin = lazy(() => import("./pages/admin/ProductosAdmin"));
+const ProductoForm = lazy(() => import("./pages/admin/ProductoForm"));
 
 // --- UTILS ---
 const ScrollToTop = () => {
@@ -63,25 +67,39 @@ const PageLoader = () => (
   </div>
 );
 
+// Layout principal de la tienda
+const StoreLayout = ({ children }) => (
+  <div className="flex flex-col min-h-screen">
+    <CartDrawer />
+    <Navbar />
+    <main className="flex-grow">{children}</main>
+    <Suspense fallback={null}>
+      <Footer />
+    </Suspense>
+  </div>
+);
+
 function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  const isHome = typeof window !== "undefined" && window.location.pathname === "/";
+  
   // LOGICA DE CARGA REAL
   const [itemsLoaded, setItemsLoaded] = useState(0);
-  const totalItemsToLoad = 2; // 1. Imagen del NewReleaseHero + 2. Video del VideoHero
-  const [isLoading, setIsLoading] = useState(true);
+  const totalItemsToLoad = isHome ? 2 : 0; // 1. Imagen del NewReleaseHero + 2. Video del VideoHero
+  const [isLoading, setIsLoading] = useState(isHome);
 
   const handleItemLoaded = useCallback(() => {
     setItemsLoaded((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
-    if (itemsLoaded >= totalItemsToLoad) {
+    if (isLoading && itemsLoaded >= totalItemsToLoad) {
       // Pequeño delay extra para que la transición sea fluida
       const timeout = setTimeout(() => setIsLoading(false), 500);
       return () => clearTimeout(timeout);
     }
-  }, [itemsLoaded, totalItemsToLoad]);
+  }, [itemsLoaded, totalItemsToLoad, isLoading]);
 
   return (
     <CartProvider>
@@ -98,12 +116,24 @@ function App() {
               isLoading ? "opacity-0 h-screen overflow-hidden" : "opacity-100"
             }`}
           >
-            <CartDrawer />
-            <Navbar />
-
-            <main className="flex-grow">
+            <AdminProductosProvider>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
+                  {/* --- RUTAS DE ADMINISTRACIÓN --- */}
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<div className="p-8 text-white/50 text-center uppercase tracking-widest text-sm">Selecciona una opción del menú</div>} />
+                    <Route path="productos" element={<ProductosAdmin />} />
+                    <Route path="productos/nuevo" element={<ProductoForm />} />
+                    <Route path="productos/editar/:id" element={<ProductoForm />} />
+                    <Route path="pedidos" element={<div className="text-white">Pedidos (Próximamente)</div>} />
+                  </Route>
+
+                  {/* --- RUTAS DE LA TIENDA --- */}
+                  <Route
+                    path="/*"
+                    element={
+                      <StoreLayout>
+                        <Routes>
                   <Route
                     path="/"
                     element={
@@ -172,14 +202,14 @@ function App() {
                       </div>
                     }
                   />
-                  <Route path="*" element={<PagePlaceholder title="404" />} />
+                          <Route path="*" element={<PagePlaceholder title="404" />} />
+                        </Routes>
+                      </StoreLayout>
+                    }
+                  />
                 </Routes>
               </Suspense>
-            </main>
-
-            <Suspense fallback={null}>
-              <Footer />
-            </Suspense>
+            </AdminProductosProvider>
           </div>
         </Router>
       </LazyMotion>
